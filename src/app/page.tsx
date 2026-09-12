@@ -1,25 +1,21 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { BrandMark } from "@/components/brand-mark";
+import { RequireSession } from "@/components/require-session";
+import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/session";
 
 export default function HomePage() {
-  const router = useRouter();
-  const { status, user, signOut } = useSession();
+  return (
+    <RequireSession>
+      <Home />
+    </RequireSession>
+  );
+}
 
-  useEffect(() => {
-    if (status === "anonymous") router.replace("/login");
-  }, [status, router]);
-
-  if (status !== "authenticated" || !user) {
-    return (
-      <main className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted">Loading…</p>
-      </main>
-    );
-  }
+function Home() {
+  const { user, signOut } = useSession();
+  if (!user) return null;
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-10">
@@ -31,13 +27,9 @@ export default function HomePage() {
             {user.firstName} {user.lastName}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={signOut}
-          className="rounded-lg border border-border px-3 py-1.5 text-sm"
-        >
+        <Button variant="secondary" onClick={signOut} className="text-sm">
           Sign out
-        </button>
+        </Button>
       </header>
 
       <section className="mt-8 rounded-xl border border-border bg-surface p-6">

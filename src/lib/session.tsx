@@ -1,7 +1,9 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { fetchMe, getToken, logout as clearSession, type AuthUser } from "./auth";
+import { fetchMe, logout as clearSession } from "@/features/auth/api";
+import type { AuthUser } from "@/features/auth/types";
+import { getToken } from "./token";
 
 type SessionStatus = "loading" | "authenticated" | "anonymous";
 

@@ -63,9 +63,7 @@ self.addEventListener("fetch", (event) => {
           return response;
         } catch {
           return (
-            (await caches.match(request)) ??
-            (await caches.match(OFFLINE_URL)) ??
-            Response.error()
+            (await caches.match(request)) ?? (await caches.match(OFFLINE_URL)) ?? Response.error()
           );
         }
       })(),
