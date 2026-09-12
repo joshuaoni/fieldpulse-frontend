@@ -3,6 +3,7 @@
 import { BrandMark } from "@/components/brand-mark";
 import { RequireSession } from "@/components/require-session";
 import { Button } from "@/components/ui/button";
+import { useMyFieldRole } from "@/features/field-roles/hooks";
 import { useSession } from "@/lib/session";
 
 export default function HomePage() {
@@ -15,6 +16,7 @@ export default function HomePage() {
 
 function Home() {
   const { user, signOut } = useSession();
+  const fieldRole = useMyFieldRole();
   if (!user) return null;
 
   return (
@@ -41,7 +43,15 @@ function Home() {
           <dd>{user.role}</dd>
           <dt className="text-muted">Job title</dt>
           <dd>{user.jobTitle ?? "—"}</dd>
-          <dt className="text-muted">Module roles</dt>
+          <dt className="text-muted">FieldPulse role</dt>
+          <dd>
+            {fieldRole.isPending
+              ? "checking…"
+              : fieldRole.isError
+                ? "unavailable"
+                : (fieldRole.data?.fieldRole ?? "none")}
+          </dd>
+          <dt className="text-muted">All module roles</dt>
           <dd>
             {user.moduleRoles?.length
               ? user.moduleRoles.map((entry) => `${entry.module}: ${entry.role}`).join(", ")

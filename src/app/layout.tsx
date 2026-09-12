@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ServiceWorkerRegistrar } from "@/components/service-worker-registrar";
+import { QueryProvider } from "@/lib/query-client";
 import { SessionProvider } from "@/lib/session";
 import "./globals.css";
 
@@ -40,7 +41,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col font-sans">
-        <SessionProvider>{children}</SessionProvider>
+        <QueryProvider>
+          <SessionProvider>{children}</SessionProvider>
+        </QueryProvider>
         <ServiceWorkerRegistrar />
       </body>
     </html>
