@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useSession } from "@/lib/session";
 
 /**
- * Gate for any screen that needs a signed-in user. 
+ * Gate for any screen that needs a signed-in user.
  */
 export function RequireSession({ children }: { children: React.ReactNode }) {
   const router = useRouter();

@@ -34,7 +34,9 @@ export async function request<T>(
 
   const headers = new Headers(rest.headers);
   headers.set("Accept", "application/json");
-  if (rest.body && !headers.has("Content-Type")) {
+
+  const isFormData = typeof FormData !== "undefined" && rest.body instanceof FormData;
+  if (rest.body && !isFormData && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
   if (auth) {

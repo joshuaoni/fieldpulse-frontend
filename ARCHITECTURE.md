@@ -110,11 +110,18 @@ they never build a URL or know a path. Response types live in
 
 ### Server state
 
-**TanStack Query** is the data layer, introduced with the first real endpoint.
-It is not optional dressing here: it gives retry-on-reconnect, cache-while-
-revalidate, and — through `persistQueryClient` and mutation resumption — the
-durable offline mutation queue the check-in flow requires. Hand-rolling that
-in `useEffect` is how this app would rot.
+**TanStack Query** is the data layer. It owns every read and every mutation's
+lifecycle: retry-on-reconnect, cache-while-revalidate, and invalidation.
+
+**The durable offline queue is separate**, in `lib/offline-queue.ts`, and is
+hand-written against IndexedDB rather than TanStack's `persistQueryClient` and
+mutation resumption. Three requirements here need control a generic mutation
+cache does not give: a check-in carries a camera **Blob** (which JSON
+persistence cannot round-trip), replay must be **strictly ordered** (a
+check-out sent before its check-in is refused), and a queued item records the
+phone's clock **for ordering only** and must never surface as the verified
+time. The mutation hooks in `features/visits/hooks.ts` call the API first and
+fall back to the queue only when the request never reached the server.
 
 - Server state → TanStack Query. **Never** mirrored into `useState`.
 - UI state (open menu, form draft) → local `useState`.
