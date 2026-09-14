@@ -45,7 +45,7 @@ export function VisitList({
             className="flex min-h-11 items-center gap-3 rounded-xl border border-border bg-surface p-4"
           >
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{visit.leadId}</p>
+              <p className="truncate text-sm font-medium">{visit.lead.companyName}</p>
               <p className="mt-0.5 text-xs text-muted">
                 {showPair && visit.pair?.name ? `${visit.pair.name} · ` : ""}
                 {progress(visit)}

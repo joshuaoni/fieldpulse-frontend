@@ -38,9 +38,20 @@ export interface VisitAttendance {
   report?: VisitReport | null;
 }
 
+/** The business being visited, as returned alongside the visit. */
+export interface LeadSummary {
+  id: string;
+  companyName: string;
+  address: string | null;
+  phone: string | null;
+  lat: number | null;
+  lng: number | null;
+}
+
 export interface Visit {
   id: string;
   leadId: string;
+  lead: LeadSummary;
   pairId: string;
   status: VisitStatus;
   scheduledFor: string | null;

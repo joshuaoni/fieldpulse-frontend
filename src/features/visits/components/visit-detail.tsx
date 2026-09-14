@@ -27,8 +27,11 @@ export function VisitDetail({ visitId }: { visitId: string }) {
     <div className="space-y-4">
       <header className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-semibold tracking-tight">{visit.leadId}</h1>
-          <p className="text-sm text-muted">{visit.pair?.name ?? "Sales pair"}</p>
+          <h1 className="truncate text-lg font-semibold tracking-tight">
+            {visit.lead.companyName}
+          </h1>
+          {visit.lead.address && <p className="text-sm text-muted">{visit.lead.address}</p>}
+          <p className="text-xs text-muted">{visit.pair?.name ?? "Sales pair"}</p>
         </div>
         <VisitStatusBadge status={visit.status} />
       </header>
