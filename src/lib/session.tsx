@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { fetchMe, logout as clearSession } from "@/features/auth/api";
 import type { AuthUser } from "@/features/auth/types";
+import { isAllowedUser } from "./access";
 import { getToken } from "./token";
 
 type SessionStatus = "loading" | "authenticated" | "anonymous";
@@ -19,7 +20,14 @@ const SessionContext = createContext<SessionValue | null>(null);
 async function resolveSession(): Promise<AuthUser | null> {
   if (!getToken()) return null;
   try {
-    return await fetchMe();
+    const user = await fetchMe();
+
+    if (!isAllowedUser(user.email)) {
+      clearSession();
+      return null;
+    }
+
+    return user;
   } catch {
     return null;
   }
