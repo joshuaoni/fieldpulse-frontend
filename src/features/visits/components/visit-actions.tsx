@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { secondsSince, useTicker } from "@/lib/use-elapsed";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
-import { getCurrentPosition } from "@/lib/geolocation";
+import { PositionSearchNotice, messageUnlessCancelled, usePositionSearch } from "./position-search";
 import { useCheckIn, useCheckOut, useSubmitReport } from "../hooks";
 import type { Visit, VisitAttendance } from "../types";
 import { myAttendance } from "../types";
@@ -11,6 +12,12 @@ import { CameraCapture } from "./camera-capture";
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong";
+}
+
+function phaseLabel(phase: Phase, seconds: number): string {
+  if (phase !== "saving") return "Getting your location…";
+  // Counted, so a stalled upload is visibly a stalled upload.
+  return seconds > 2 ? `Sending… ${seconds}s` : "Sending…";
 }
 
 /**
@@ -33,24 +40,41 @@ function QueuedNotice() {
   );
 }
 
+/**
+ * A check-in is two waits with nothing to tell them apart on screen: finding
+ * the rep, then sending the photo. Naming only the first one meant that once
+ * the location had been found, a slow upload went on claiming the phone was
+ * still looking for satellites — which is where an afternoon of chasing a
+ * geolocation bug that was really an upload came from.
+ */
+type Phase = "idle" | "locating" | "saving";
+
 function CheckInStep({ visitId }: { visitId: string }) {
   const checkIn = useCheckIn();
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<Phase>("idle");
   const [heldPhoto, setHeldPhoto] = useState<Blob | null>(null);
+  const position = usePositionSearch();
+  const [sendingSince, setSendingSince] = useState(0);
+  const busy = phase !== "idle";
+  const sendingFor = secondsSince(sendingSince, useTicker(phase === "saving"));
 
   async function submit(photo: Blob) {
     setError(null);
-    setBusy(true);
+    setPhase("locating");
     try {
-      const { lat, lng } = await getCurrentPosition();
+      const { lat, lng } = await position.locate();
+      setSendingSince(Date.now());
+      setPhase("saving");
       await checkIn.mutateAsync({ visitId, lat, lng, photo });
       setHeldPhoto(null);
     } catch (cause) {
+      // The photo is kept either way, so a cancelled or failed search costs
+      // the rep the location only — never the trip back to the shop front.
       setHeldPhoto(photo);
-      setError(message(cause));
+      setError(messageUnlessCancelled(cause));
     } finally {
-      setBusy(false);
+      setPhase("idle");
     }
   }
 
@@ -68,8 +92,11 @@ function CheckInStep({ visitId }: { visitId: string }) {
         <>
           <p className="text-sm text-muted">Your photo is saved. Only the location is missing.</p>
           <Button onClick={() => submit(heldPhoto)} disabled={busy} className="mt-3 w-full">
-            {busy ? "Getting your location…" : "Try again"}
+            {phase === "idle" ? "Try again" : phaseLabel(phase, sendingFor)}
           </Button>
+          {position.searching && (
+            <PositionSearchNotice seconds={position.seconds} onCancel={position.cancel} />
+          )}
           <Button
             variant="secondary"
             onClick={() => {
@@ -85,7 +112,11 @@ function CheckInStep({ visitId }: { visitId: string }) {
       ) : (
         <>
           <CameraCapture onCapture={submit} disabled={busy} />
-          {busy && <p className="mt-3 text-sm text-muted">Getting your location…</p>}
+          {position.searching ? (
+            <PositionSearchNotice seconds={position.seconds} onCancel={position.cancel} />
+          ) : (
+            busy && <p className="mt-3 text-sm text-muted">{phaseLabel(phase, sendingFor)}</p>
+          )}
         </>
       )}
 
@@ -101,18 +132,24 @@ function CheckInStep({ visitId }: { visitId: string }) {
 function CheckOutStep({ visitId }: { visitId: string }) {
   const checkOut = useCheckOut();
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const position = usePositionSearch();
+  const [sendingSince, setSendingSince] = useState(0);
+  const busy = phase !== "idle";
+  const sendingFor = secondsSince(sendingSince, useTicker(phase === "saving"));
 
   async function onCheckOut() {
     setError(null);
-    setBusy(true);
+    setPhase("locating");
     try {
-      const { lat, lng } = await getCurrentPosition();
+      const { lat, lng } = await position.locate();
+      setSendingSince(Date.now());
+      setPhase("saving");
       await checkOut.mutateAsync({ visitId, lat, lng });
     } catch (cause) {
-      setError(message(cause));
+      setError(messageUnlessCancelled(cause));
     } finally {
-      setBusy(false);
+      setPhase("idle");
     }
   }
 
@@ -123,8 +160,11 @@ function CheckOutStep({ visitId }: { visitId: string }) {
       <h2 className="text-sm font-medium">Check out</h2>
       <p className="mt-1 mb-3 text-sm text-muted">Do this as you leave the location.</p>
       <Button onClick={onCheckOut} disabled={busy} className="w-full">
-        {busy ? "Checking out…" : "Check out"}
+        {phase === "idle" ? "Check out" : phaseLabel(phase, sendingFor)}
       </Button>
+      {position.searching && (
+        <PositionSearchNotice seconds={position.seconds} onCancel={position.cancel} />
+      )}
       {error && (
         <p role="alert" className="mt-3 text-sm text-danger">
           {error}

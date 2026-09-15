@@ -1,6 +1,11 @@
 import { api } from "@/lib/api-client";
 import type { Visit, VisitFilters, VisitListResponse } from "./types";
 
+/**
+ * The deadline on the three writes a rep makes in the field.
+ */
+const FIELD_WRITE_TIMEOUT_MS = 20_000;
+
 function toQuery(filters: VisitFilters): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(filters)) {
@@ -47,6 +52,7 @@ export async function checkIn({
   const { visit } = await api<{ visit: Visit }>(`/api/visits/${visitId}/check-in`, {
     method: "POST",
     body: form,
+    timeoutMs: FIELD_WRITE_TIMEOUT_MS,
   });
   return visit;
 }
@@ -67,6 +73,7 @@ export async function checkOut({
   const { visit } = await api<{ visit: Visit }>(`/api/visits/${visitId}/check-out`, {
     method: "POST",
     body: JSON.stringify({ lat, lng, clientLocalCheckOutAt }),
+    timeoutMs: FIELD_WRITE_TIMEOUT_MS,
   });
   return visit;
 }
@@ -81,6 +88,7 @@ export async function submitReport({ visitId, notes, outcome }: ReportPayload): 
   const { visit } = await api<{ visit: Visit }>(`/api/visits/${visitId}/report`, {
     method: "POST",
     body: JSON.stringify({ notes, outcome }),
+    timeoutMs: FIELD_WRITE_TIMEOUT_MS,
   });
   return visit;
 }

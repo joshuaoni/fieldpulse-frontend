@@ -22,6 +22,9 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
               return failureCount < 3;
             },
           },
+          mutations: {
+            networkMode: "always",
+          },
         },
       }),
   );

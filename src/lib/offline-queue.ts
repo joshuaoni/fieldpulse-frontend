@@ -4,15 +4,7 @@
  * A durable queue for field actions recorded without a connection.
  *
  * The requirement it exists for: a check-in recorded offline must survive an
- * app kill, a reboot, and a week in a drawer. That rules out memory, and it
- * rules out localStorage — a check-in carries a camera photo, and only
- * IndexedDB stores a Blob.
- *
- * It is deliberately hand-written rather than layered on TanStack Query's
- * mutation persistence. Three things here need explicit control that a generic
- * mutation cache does not give: Blob payloads, strict replay ordering, and the
- * rule that a queued item records the phone's clock for ordering only and
- * never as the verified time.
+ * app kill, a reboot, and a week in a drawer. 
  */
 
 const DB_NAME = "fieldpulse";
@@ -51,7 +43,35 @@ export interface QueuedItem {
   lastError?: string;
 }
 
-function openDatabase(): Promise<IDBDatabase> {
+/**
+ * How long any one storage operation may take before it is treated as failed.
+ */
+const STORAGE_TIMEOUT_MS = 5_000;
+
+export class StorageUnavailable extends Error {
+  constructor() {
+    super("This phone's storage did not respond, so the action could not be saved");
+    this.name = "StorageUnavailable";
+  }
+}
+
+function within<T>(work: Promise<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const expiry = setTimeout(() => reject(new StorageUnavailable()), STORAGE_TIMEOUT_MS);
+    work.then(
+      (value) => {
+        clearTimeout(expiry);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(expiry);
+        reject(error);
+      },
+    );
+  });
+}
+
+function requestDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = () => {
@@ -62,7 +82,20 @@ function openDatabase(): Promise<IDBDatabase> {
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
+    request.onblocked = () => reject(new StorageUnavailable());
   });
+}
+
+/**
+ * Opens the database, retrying once if the first attempt says nothing.
+ */
+async function openDatabase(): Promise<IDBDatabase> {
+  try {
+    return await within(requestDatabase());
+  } catch (error) {
+    if (!(error instanceof StorageUnavailable)) throw error;
+    return within(requestDatabase());
+  }
 }
 
 function promisify<T>(request: IDBRequest<T>): Promise<T> {
@@ -79,12 +112,14 @@ async function withStore<T>(
   const db = await openDatabase();
   try {
     const tx = db.transaction(STORE, mode);
-    const result = await work(tx.objectStore(STORE));
-    await new Promise<void>((resolve, reject) => {
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-      tx.onabort = () => reject(tx.error);
-    });
+    const result = await within(work(tx.objectStore(STORE)));
+    await within(
+      new Promise<void>((resolve, reject) => {
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+      }),
+    );
     return result;
   } finally {
     db.close();

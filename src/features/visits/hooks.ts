@@ -42,6 +42,19 @@ export function useVisit(id: string) {
 }
 
 /**
+ * Whether there is any point attempting a request at all.
+ *
+ * `navigator.onLine` is only trustworthy in one direction — true does not
+ * promise the server is reachable — but false is definitive, and that is the
+ * direction worth acting on. Queueing straight away turns a rep's check-in
+ * into "Saved on this device" the instant they tap, rather than after a
+ * deadline spent waiting for a request that was never going to leave the
+ * phone.
+ */
+const definitelyOffline = (): boolean =>
+  typeof navigator !== "undefined" && navigator.onLine === false;
+
+/**
  * A failure that means "the network never carried this" — as opposed to the
  * server considering and refusing it. Only the former is worth queuing.
  */
@@ -145,6 +158,12 @@ export function useCheckIn() {
   return useMutation<{ queued: boolean; visit?: Visit }, Error, CheckInVariables>({
     mutationFn: async ({ visitId, lat, lng, photo }) => {
       const clientLocalAt = new Date().toISOString();
+
+      if (definitelyOffline()) {
+        await enqueue({ kind: "check-in", visitId, lat, lng, photo, clientLocalAt });
+        return { queued: true };
+      }
+
       try {
         const visit = await visitsApi.checkIn({
           visitId,
@@ -160,7 +179,9 @@ export function useCheckIn() {
         return { queued: true };
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: visitKeys.all }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: visitKeys.all });
+    },
   });
 }
 
@@ -176,6 +197,12 @@ export function useCheckOut() {
   return useMutation<{ queued: boolean; visit?: Visit }, Error, CheckOutVariables>({
     mutationFn: async ({ visitId, lat, lng }) => {
       const clientLocalAt = new Date().toISOString();
+
+      if (definitelyOffline()) {
+        await enqueue({ kind: "check-out", visitId, lat, lng, clientLocalAt });
+        return { queued: true };
+      }
+
       try {
         const visit = await visitsApi.checkOut({
           visitId,
@@ -190,7 +217,9 @@ export function useCheckOut() {
         return { queued: true };
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: visitKeys.all }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: visitKeys.all });
+    },
   });
 }
 
@@ -205,6 +234,17 @@ export function useSubmitReport() {
 
   return useMutation<{ queued: boolean; visit?: Visit }, Error, ReportVariables>({
     mutationFn: async ({ visitId, notes, outcome }) => {
+      if (definitelyOffline()) {
+        await enqueue({
+          kind: "report",
+          visitId,
+          notes,
+          outcome,
+          clientLocalAt: new Date().toISOString(),
+        });
+        return { queued: true };
+      }
+
       try {
         const visit = await visitsApi.submitReport({ visitId, notes, outcome });
         return { queued: false, visit };
@@ -220,6 +260,8 @@ export function useSubmitReport() {
         return { queued: true };
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: visitKeys.all }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: visitKeys.all });
+    },
   });
 }
