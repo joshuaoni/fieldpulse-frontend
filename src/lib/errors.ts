@@ -10,7 +10,15 @@ export class ApiError extends Error {
   }
 }
 
-/** True when the request never reached the server — offline, DNS, CORS. */
 export function isNetworkError(error: unknown): boolean {
-  return error instanceof TypeError;
+  if (error instanceof TypeError) return true;
+  return error instanceof RequestTimeout;
+}
+
+/** A request that passed its deadline before the server answered. */
+export class RequestTimeout extends Error {
+  constructor() {
+    super("The network did not respond");
+    this.name = "RequestTimeout";
+  }
 }

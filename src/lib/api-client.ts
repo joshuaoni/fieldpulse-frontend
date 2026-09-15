@@ -1,6 +1,17 @@
 import { config } from "./config";
-import { ApiError } from "./errors";
+import { ApiError, RequestTimeout } from "./errors";
 import { clearToken, getToken } from "./token";
+
+/**
+ * How long any one request may take before it is treated as never having
+ * arrived.
+ *
+ * Generous, because it has to cover a check-in photo going up a bad connection
+ * at a shop front. A check-in that trips it is not lost — it goes into the
+ * durable queue and replays later, which is a far better outcome for the rep
+ * than standing at the door watching a spinner.
+ */
+const REQUEST_TIMEOUT_MS = 45_000;
 
 type Target = "fieldpulse" | "erp";
 
@@ -27,9 +38,9 @@ async function readErrorMessage(response: Response, fallback: string) {
 export async function request<T>(
   target: Target,
   path: string,
-  init: RequestInit & { auth?: boolean } = {},
+  init: RequestInit & { auth?: boolean; timeoutMs?: number } = {},
 ): Promise<T> {
-  const { auth = true, ...rest } = init;
+  const { auth = true, timeoutMs = REQUEST_TIMEOUT_MS, ...rest } = init;
   const baseUrl = target === "erp" ? config.erpBaseUrl : config.apiBaseUrl;
 
   const headers = new Headers(rest.headers);
@@ -44,7 +55,30 @@ export async function request<T>(
     if (token) headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(`${baseUrl}${path}`, { ...rest, headers });
+  const deadline = new AbortController();
+  let expiry: ReturnType<typeof setTimeout> | undefined;
+
+  const timedOut = new Promise<never>((_, reject) => {
+    expiry = setTimeout(() => {
+      deadline.abort();
+      reject(new RequestTimeout());
+    }, timeoutMs);
+  });
+
+  let response: Response;
+  try {
+    response = await Promise.race([
+      fetch(`${baseUrl}${path}`, { ...rest, headers, signal: deadline.signal }),
+      timedOut,
+    ]);
+  } catch (error) {
+    if (error instanceof RequestTimeout) throw error;
+    if (deadline.signal.aborted) throw new RequestTimeout();
+    throw error;
+  } finally {
+    // Also stops the losing timer from rejecting with nobody listening.
+    clearTimeout(expiry);
+  }
 
   if (response.status === 401) {
     clearToken();
@@ -63,10 +97,10 @@ export async function request<T>(
   return (await response.json()) as T;
 }
 
+type CallOptions = RequestInit & { auth?: boolean; timeoutMs?: number };
+
 /** Calls the FieldPulse API (meta4-fieldpulse). */
-export const api = <T>(path: string, init?: RequestInit & { auth?: boolean }) =>
-  request<T>("fieldpulse", path, init);
+export const api = <T>(path: string, init?: CallOptions) => request<T>("fieldpulse", path, init);
 
 /** Calls the ERP (meta-erp-backend) — sign-in and identity only. */
-export const erp = <T>(path: string, init?: RequestInit & { auth?: boolean }) =>
-  request<T>("erp", path, init);
+export const erp = <T>(path: string, init?: CallOptions) => request<T>("erp", path, init);
