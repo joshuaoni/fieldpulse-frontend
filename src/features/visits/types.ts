@@ -1,3 +1,5 @@
+import type { PairMember } from "@/lib/pairs";
+
 export type VisitStatus = "PLANNED" | "CHECKED_IN" | "COMPLETED" | "MISSED";
 
 export interface VisitReport {
@@ -20,17 +22,13 @@ export interface VisitAttendance {
 
   checkInLat: number | null;
   checkInLng: number | null;
-  /** Short-lived presigned URL. Expires — do not cache or forward it. */
   checkInPhotoUrl: string | null;
-  /** Server-assigned. The only arrival time that may be shown as verified. */
   checkInAt: string | null;
 
   checkOutLat: number | null;
   checkOutLng: number | null;
-  /** Server-assigned. The only departure time that may be shown as verified. */
   checkOutAt: string | null;
 
-  /** Advisory — the phone's own clock. Never present this as verified. */
   clientLocalCheckInAt: string | null;
   clientLocalCheckOutAt: string | null;
 
@@ -38,7 +36,10 @@ export interface VisitAttendance {
   report?: VisitReport | null;
 }
 
-/** The business being visited, as returned alongside the visit. */
+export interface SubmittedReport extends VisitReport {
+  attendance?: { rep?: RepSummary };
+}
+
 export interface LeadSummary {
   id: string;
   companyName: string;
@@ -58,8 +59,9 @@ export interface Visit {
   planId: string | null;
   createdAt: string;
   updatedAt: string;
-  pair?: { id: string; name: string | null };
+  pair?: { id: string; name: string | null; members?: PairMember[] };
   attendances: VisitAttendance[];
+  report?: SubmittedReport | null;
 }
 
 export interface Pagination {

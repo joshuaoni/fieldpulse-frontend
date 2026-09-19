@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { PositionSearchNotice, messageUnlessCancelled, usePositionSearch } from "./position-search";
 import { useCheckIn, useCheckOut, useSubmitReport } from "../hooks";
-import type { Visit, VisitAttendance } from "../types";
+import type { SubmittedReport, Visit, VisitAttendance } from "../types";
 import { myAttendance } from "../types";
 import { CameraCapture } from "./camera-capture";
 
@@ -21,15 +21,32 @@ function phaseLabel(phase: Phase, seconds: number): string {
 }
 
 /**
- * The calling rep's next step for this visit. Driven by *their own* attendance.
+ * The calling rep's next step for this visit.
  */
 export function VisitActions({ visit, repId }: { visit: Visit; repId: string }) {
   const mine: VisitAttendance | undefined = myAttendance(visit, repId);
 
   if (!mine?.checkInAt) return <CheckInStep visitId={visit.id} />;
   if (!mine.checkOutAt) return <CheckOutStep visitId={visit.id} />;
-  if (!mine.report) return <ReportStep visitId={visit.id} />;
-  return null;
+  if (visit.report) return <AlreadyReported report={visit.report} repId={repId} />;
+  return <ReportStep visitId={visit.id} />;
+}
+
+function AlreadyReported({ report, repId }: { report: SubmittedReport; repId: string }) {
+  const author = report.attendance?.rep;
+  const byMe = author?.id === repId;
+  const name = byMe ? "You" : (author?.firstName ?? "Your partner");
+
+  return (
+    <p className="mt-3 text-sm text-muted">
+      {name} wrote this visit up on{" "}
+      {new Date(report.submittedAt).toLocaleString([], {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })}
+      . A visit gets one report.
+    </p>
+  );
 }
 
 function QueuedNotice() {

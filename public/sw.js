@@ -84,3 +84,46 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
+
+/* ── Reminders ────────────────────────────────────────────────────────────
+ *
+ * Two channels reach a rep, and this file owns one of them: a push
+ * notification sent by the server, which needs connectivity at the moment it
+ * fires. The other is email, which needs nothing from the browser at all.
+ */
+
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = {};
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title || "FieldPulse", {
+      body: payload.body || "",
+      tag: payload.tag || "fieldpulse",
+      renotify: Boolean(payload.tag),
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      data: { url: payload.url || "/" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || "/";
+
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      
+      for (const client of windows) {
+        if (client.url.includes(target) && "focus" in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(target);
+    })(),
+  );
+});

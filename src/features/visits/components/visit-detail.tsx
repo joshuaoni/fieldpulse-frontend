@@ -1,5 +1,6 @@
 "use client";
 
+import { pairLabel } from "@/lib/pairs";
 import { useSession } from "@/lib/session";
 import { useVisit } from "../hooks";
 import { myAttendance } from "../types";
@@ -31,7 +32,7 @@ export function VisitDetail({ visitId }: { visitId: string }) {
             {visit.lead.companyName}
           </h1>
           {visit.lead.address && <p className="text-sm text-muted">{visit.lead.address}</p>}
-          <p className="text-xs text-muted">{visit.pair?.name ?? "Sales pair"}</p>
+          <p className="text-xs text-muted">{pairLabel(visit)}</p>
         </div>
         <VisitStatusBadge status={visit.status} />
       </header>

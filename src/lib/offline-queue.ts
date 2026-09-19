@@ -4,7 +4,7 @@
  * A durable queue for field actions recorded without a connection.
  *
  * The requirement it exists for: a check-in recorded offline must survive an
- * app kill, a reboot, and a week in a drawer. 
+ * app kill, a reboot, and a week in a drawer.
  */
 
 const DB_NAME = "fieldpulse";

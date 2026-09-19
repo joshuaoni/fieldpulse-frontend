@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { pairLabel } from "@/lib/pairs";
 import type { Visit } from "../types";
 import { VisitStatusBadge } from "./visit-status-badge";
 
@@ -47,7 +48,7 @@ export function VisitList({
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{visit.lead.companyName}</p>
               <p className="mt-0.5 text-xs text-muted">
-                {showPair && visit.pair?.name ? `${visit.pair.name} · ` : ""}
+                {showPair ? `${pairLabel(visit)} · ` : ""}
                 {progress(visit)}
               </p>
             </div>
