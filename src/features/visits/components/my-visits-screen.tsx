@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useMyFieldRole } from "@/features/field-roles/hooks";
 import { useSession } from "@/lib/session";
 import { useMyVisits, useQueueFlush } from "../hooks";
+import { RemindersPanel } from "@/features/reminders/components/reminders-panel";
 import { PendingActionsBanner } from "./pending-actions-banner";
 import { VisitList } from "./visit-list";
 
@@ -35,10 +36,23 @@ export function MyVisitsScreen() {
 
       <PendingActionsBanner />
 
+      <RemindersPanel />
+
       {fieldRole.data?.fieldRole === "FIELD_MANAGER" && (
-        <Link href="/manager" className="text-sm text-brand underline">
-          Team view
-        </Link>
+        <nav className="flex flex-wrap gap-2">
+          <Link
+            href="/manager"
+            className="min-h-11 flex-1 rounded-lg border border-border px-3 py-2 text-center text-sm text-brand"
+          >
+            Team visits
+          </Link>
+          <Link
+            href="/manager/plans"
+            className="min-h-11 flex-1 rounded-lg border border-border px-3 py-2 text-center text-sm text-brand"
+          >
+            Weekly plan
+          </Link>
+        </nav>
       )}
 
       {isPending && <p className="text-sm text-muted">Loading…</p>}

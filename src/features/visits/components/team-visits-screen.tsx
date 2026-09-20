@@ -23,7 +23,12 @@ export function TeamVisitsScreen() {
         <Link href="/" className="text-sm text-brand underline">
           My visits
         </Link>
-        <h1 className="mt-2 text-lg font-semibold tracking-tight">Team visits</h1>
+        <div className="mt-2 flex flex-wrap items-baseline justify-between gap-2">
+          <h1 className="text-lg font-semibold tracking-tight">Team visits</h1>
+          <Link href="/manager/plans" className="text-sm text-brand underline">
+            Weekly plan →
+          </Link>
+        </div>
         <p className="text-sm text-muted">Everyone in your reporting line.</p>
       </header>
 
