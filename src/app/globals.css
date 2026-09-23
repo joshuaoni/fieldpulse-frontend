@@ -1,39 +1,109 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f8f7;
+  /* Neutrals follow the shared Meta4 dashboard (inventory-dashboard's
+     bg.page / fg.* scale): a cool blue-grey family, not a green-tinted one.
+     --brand stays green and carries the FieldPulse identity through actions,
+     links and status instead of through the greys. */
+  --background: #f4f7f9;
   --surface: #ffffff;
-  --foreground: #14201b;
-  --muted: #5d6b64;
-  --border: #dde3df;
+  --sunken: #e8eef2;
+  --foreground: #122e3d;
+  --muted: #607d8e;
+  --border: #e8eef2;
   --brand: #10543e;
   --brand-ink: #f0fdf7;
   --danger: #9f1239;
+
+  /* The manager shell's sidebar/topbar deliberately use a neutral
+     black-and-white palette (matching the shared Meta4 dashboard look)
+     rather than --brand, which stays reserved for actions and links. */
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #d1d5dc;
+  --sidebar-foreground: #111723;
+  --sidebar-section-label: #8c9bb0;
+  --sidebar-active-bg: #111723;
+  --sidebar-active-foreground: #ffffff;
+  --sidebar-hover-bg: #f3f4f6;
+  --sidebar-disabled: #b0b8c1;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
   --color-danger: var(--danger);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-section-label: var(--sidebar-section-label);
+  --color-sidebar-active-bg: var(--sidebar-active-bg);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+  --color-sidebar-hover-bg: var(--sidebar-hover-bg);
+  --color-sidebar-disabled: var(--sidebar-disabled);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+/**
+ * The manager shell is light, whatever the operating system says.
+ *
+ * It mirrors the shared Meta4 dashboard, which has no dark theme at all. The
+ * sidebar was already pinned light; the page behind it was not, so a manager
+ * on a dark-mode machine got a white sidebar against a dark page — which is
+ * what this fixes. `color-scheme` keeps form controls and scrollbars light
+ * with it, rather than leaving dark widgets on a light page.
+ *
+ * The rep screens are untouched and still follow the system preference: they
+ * are used outdoors, on a phone, and dark mode there is worth having.
+ */
+.manager-surface {
+  --background: #f4f7f9;
+  --surface: #ffffff;
+  --sunken: #e8eef2;
+  --foreground: #122e3d;
+  --muted: #607d8e;
+  --border: #e8eef2;
+  --brand: #10543e;
+  --brand-ink: #f0fdf7;
+  --danger: #9f1239;
+
+  color-scheme: light;
+  background: var(--background);
+  color: var(--foreground);
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0c1210;
-    --surface: #141c18;
-    --foreground: #e8efea;
-    --muted: #9aa8a0;
-    --border: #263029;
+    /* The same family after dark. inventory-dashboard has no dark theme to
+       copy, so these are derived from the light scale rather than invented
+       from the old green one. */
+    --background: #0b1620;
+    --surface: #12202b;
+    --sunken: #16262f;
+    --foreground: #e6eef4;
+    --muted: #8fa3b0;
+    --border: #22333f;
     --brand: #2f9d76;
     --brand-ink: #06120d;
     --danger: #fb7185;
+
+    /* The manager shell stays a fixed light/neutral surface even in dark
+       mode — it mirrors the shared Meta4 dashboard chrome, which has no
+       dark theme of its own, rather than inventing one here. */
+    --sidebar-bg: #ffffff;
+    --sidebar-border: #d1d5dc;
+    --sidebar-foreground: #111723;
+    --sidebar-section-label: #8c9bb0;
+    --sidebar-active-bg: #111723;
+    --sidebar-active-foreground: #ffffff;
+    --sidebar-hover-bg: #f3f4f6;
+    --sidebar-disabled: #b0b8c1;
   }
 }
 
