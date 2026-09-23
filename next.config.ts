@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 /**
  * Hosts allowed to request dev-only assets (`/_next`, `/__nextjs`, the HMR
- * socket). 
+ * socket).
  *
  * This is development-only and does not affect a production build.
  * Set DEV_ALLOWED_ORIGINS to add a hostname the ranges below don't cover.
@@ -20,15 +20,28 @@ const allowedDevOrigins = [
     .filter(Boolean) ?? []),
 ];
 
+const chatwootOrigin = process.env.NEXT_PUBLIC_CHATWOOT_ORIGIN ?? "https://app.chatwoot.com";
+
 const nextConfig: NextConfig = {
   allowedDevOrigins,
   async headers() {
     return [
       {
-        source: "/(.*)",
+        source: "/((?!integrations/chatwoot).*)",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
+      {
+        source: "/integrations/chatwoot",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          {
+            key: "Content-Security-Policy",
+            value: `frame-ancestors 'self' ${chatwootOrigin}`,
+          },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },

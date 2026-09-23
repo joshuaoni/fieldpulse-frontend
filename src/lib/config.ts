@@ -15,4 +15,5 @@ export const config = {
     /\/$/,
     "",
   ),
+  chatwootOrigin: process.env.NEXT_PUBLIC_CHATWOOT_ORIGIN ?? "https://app.chatwoot.com",
 } as const;

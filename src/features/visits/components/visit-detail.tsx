@@ -1,5 +1,6 @@
 "use client";
 
+import { useMyFieldRole } from "@/features/field-roles/hooks";
 import { pairLabel } from "@/lib/pairs";
 import { useSession } from "@/lib/session";
 import { useVisit } from "../hooks";
@@ -7,9 +8,11 @@ import { myAttendance } from "../types";
 import { AttendanceCard } from "./attendance-card";
 import { VisitActions } from "./visit-actions";
 import { VisitStatusBadge } from "./visit-status-badge";
+import { LeadEngagementPanel } from "@/features/leads/components/lead-engagement-panel";
 
 export function VisitDetail({ visitId }: { visitId: string }) {
   const { user } = useSession();
+  const fieldRole = useMyFieldRole();
   const { data: visit, isPending, isError, error } = useVisit(visitId);
 
   if (isPending) return <p className="text-sm text-muted">Loading…</p>;
@@ -39,6 +42,10 @@ export function VisitDetail({ visitId }: { visitId: string }) {
 
       {/* A manager viewing someone else's visit gets no action panel. */}
       {user && <VisitActions visit={visit} repId={user.id} />}
+
+      {fieldRole.data?.fieldRole === "FIELD_MANAGER" && (
+        <LeadEngagementPanel leadId={visit.leadId} />
+      )}
 
       {nobodyHasArrived && !iAmOnThisVisit && (
         <p className="rounded-xl border border-dashed border-border p-6 text-sm text-muted">
