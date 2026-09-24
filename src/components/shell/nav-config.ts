@@ -34,7 +34,7 @@ export const MANAGER_NAV: NavSectionConfig[] = [
   {
     label: "Field analysis",
     items: [
-      { label: "Reps & pairs", href: "/manager/pairs", icon: Users, disabled: true },
+      { label: "Reps & pairs", href: "/manager/pairs", icon: Users },
       { label: "Leads & routes", href: "/manager/leads", icon: MapPinned, disabled: true },
       { label: "Reports", href: "/manager/reports", icon: BarChart3, disabled: true },
     ],

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { pairLabel } from "@/lib/pairs";
 import { useCheckIns } from "../hooks";
+import { CheckInDetail } from "./check-in-detail";
 import {
   STATUS_LABEL,
   describeConcerns,
@@ -38,9 +38,11 @@ const time = (iso: string) =>
 export function CheckInsScreen() {
   const [range] = useState(thisWeek);
   const [status, setStatus] = useState<CheckInStatus | undefined>(undefined);
+  const [openId, setOpenId] = useState<string | null>(null);
 
   const { data, isPending, isError, error } = useCheckIns({ ...range, status });
   const counts = data?.counts;
+  const open = data?.checkIns.find((checkIn) => checkIn.attendanceId === openId) ?? null;
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
@@ -97,10 +99,16 @@ export function CheckInsScreen() {
       {data && data.checkIns.length > 0 && (
         <ul className="mt-5 divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
           {data.checkIns.map((checkIn) => (
-            <CheckInRow key={checkIn.attendanceId} checkIn={checkIn} />
+            <CheckInRow
+              key={checkIn.attendanceId}
+              checkIn={checkIn}
+              onOpen={() => setOpenId(checkIn.attendanceId)}
+            />
           ))}
         </ul>
       )}
+
+      {open && <CheckInDetail checkIn={open} onClose={() => setOpenId(null)} />}
 
       <Note />
     </div>
@@ -138,10 +146,10 @@ function Tab({
 const BADGE: Record<CheckInStatus, string> = {
   FLAGGED: "bg-danger/10 text-danger",
   PENDING: "bg-amber-500/10 text-amber-700",
-  VERIFIED: "bg-brand/10 text-brand",
+  VERIFIED: "bg-success-bg text-success-fg",
 };
 
-function CheckInRow({ checkIn }: { checkIn: CheckIn }) {
+function CheckInRow({ checkIn, onOpen }: { checkIn: CheckIn; onOpen: () => void }) {
   const flagged = checkIn.status === "FLAGGED";
   const detail = flagged ? describeConcerns(checkIn) : describeProgress(checkIn);
 
@@ -149,9 +157,10 @@ function CheckInRow({ checkIn }: { checkIn: CheckIn }) {
 
   return (
     <li>
-      <Link
-        href={`/visits/${checkIn.visitId}`}
-        className="flex items-stretch gap-4 p-4 hover:bg-sunken"
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex w-full items-stretch gap-4 p-4 text-left hover:bg-sunken"
       >
         {checkIn.photoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -188,7 +197,7 @@ function CheckInRow({ checkIn }: { checkIn: CheckIn }) {
             <p className={`mt-1 text-sm ${flagged ? "text-danger" : "text-muted"}`}>{detail}</p>
           )}
         </div>
-      </Link>
+      </button>
     </li>
   );
 }

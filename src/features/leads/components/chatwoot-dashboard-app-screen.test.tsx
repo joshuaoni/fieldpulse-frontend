@@ -55,7 +55,7 @@ const engagement: LeadEngagement = {
       id: "v1",
       scheduledFor: "2026-09-20T08:00:00.000Z",
       status: "COMPLETED",
-      outcome: "interested",
+      outcome: "INTERESTED",
       submittedAt: null,
     },
   ],
@@ -94,7 +94,7 @@ describe("ChatwootDashboardAppScreen", () => {
     renderScreen();
     postAppContext(42);
 
-    expect(await screen.findByText("interested")).toBeTruthy();
+    expect(await screen.findByText("Interested")).toBeTruthy();
     expect(fetchLeadEngagementByChatwootContact).toHaveBeenCalledWith("42");
   });
 

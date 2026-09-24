@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { VisitOutcome } from "@/lib/outcomes";
 import { useEffect, useState } from "react";
 import { ApiError, isNetworkError } from "@/lib/errors";
 import {
@@ -226,7 +227,7 @@ export function useCheckOut() {
 interface ReportVariables {
   visitId: string;
   notes: string;
-  outcome?: string;
+  outcome?: VisitOutcome;
 }
 
 export function useSubmitReport() {

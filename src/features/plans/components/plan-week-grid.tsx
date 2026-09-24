@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, RotateCw } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import type { PairMember } from "@/lib/pairs";
@@ -109,27 +109,31 @@ export function PlanWeekGrid() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="secondary" onClick={() => setWeekStart(shiftWeeks(weekStart, -1))}>
-            ← Previous
+          <Button variant="outline" onClick={() => setWeekStart(shiftWeeks(weekStart, -1))}>
+            <ChevronLeft size={18} aria-hidden />
+            Previous
           </Button>
-          <Button variant="secondary" onClick={() => setWeekStart(shiftWeeks(weekStart, 1))}>
-            Next →
+          <Button variant="outline" onClick={() => setWeekStart(shiftWeeks(weekStart, 1))}>
+            Next
+            <ChevronRight size={18} aria-hidden />
           </Button>
           <Button
-            variant="secondary"
+            variant="outline"
             onClick={() => generate.mutate()}
             disabled={generate.isPending || busy}
           >
-            {generate.isPending ? "Planning…" : "Generate drafts"}
+            <RotateCw size={18} aria-hidden />
+            {generate.isPending ? "Planning…" : "Regenerate"}
           </Button>
           <Button
+            variant="dark"
             onClick={() => publish.mutate()}
             disabled={busy || generate.isPending || draftCount === 0}
-            className="bg-sidebar-active-bg text-sidebar-active-foreground"
           >
+            <Plus size={18} aria-hidden />
             {publish.isPending
               ? "Publishing…"
-              : `Publish week${draftCount ? ` (${draftCount})` : ""}`}
+              : `Publish plan${draftCount ? ` (${draftCount})` : ""}`}
           </Button>
         </div>
       </header>
@@ -158,7 +162,7 @@ export function PlanWeekGrid() {
 
       {plans && plans.length === 0 && (
         <p className="rounded-xl border border-dashed border-border p-6 text-sm text-muted">
-          No plans for this week yet. Generate drafts to propose one per pair.
+          No plans for this week yet. Regenerate to propose one per pair.
         </p>
       )}
 

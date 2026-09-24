@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { secondsSince, useTicker } from "@/lib/use-elapsed";
 import { Button } from "@/components/ui/button";
-import { TextField } from "@/components/ui/text-field";
+import { OUTCOMES, OUTCOME_LABEL, type VisitOutcome } from "@/lib/outcomes";
 import { PositionSearchNotice, messageUnlessCancelled, usePositionSearch } from "./position-search";
 import { useCheckIn, useCheckOut, useSubmitReport } from "../hooks";
 import type { SubmittedReport, Visit, VisitAttendance } from "../types";
@@ -194,7 +194,7 @@ function CheckOutStep({ visitId }: { visitId: string }) {
 function ReportStep({ visitId }: { visitId: string }) {
   const submitReport = useSubmitReport();
   const [notes, setNotes] = useState("");
-  const [outcome, setOutcome] = useState("");
+  const [outcome, setOutcome] = useState<VisitOutcome | "">("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -215,9 +215,10 @@ function ReportStep({ visitId }: { visitId: string }) {
 
   return (
     <form onSubmit={onSubmit} className="rounded-xl border border-border bg-surface p-4">
-      <h2 className="text-sm font-medium">Your report</h2>
+      <h2 className="text-sm font-medium">Visit report</h2>
       <p className="mt-1 text-sm text-muted">
-        Your own account of the visit. Your partner writes theirs separately.
+        One account of the call, for the pair. Whichever of you files it first is the one that
+        stands.
       </p>
 
       <label className="mt-3 block text-sm font-medium" htmlFor="notes">
@@ -233,15 +234,22 @@ function ReportStep({ visitId }: { visitId: string }) {
         className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-base outline-none focus:border-brand"
       />
 
-      <TextField
+      <label className="mt-4 block text-sm font-medium" htmlFor="outcome">
+        Outcome (optional)
+      </label>
+      <select
         id="outcome"
-        label="Outcome (optional)"
-        placeholder="interested / no decision-maker present"
-        maxLength={200}
         value={outcome}
-        onChange={(event) => setOutcome(event.target.value)}
-        className="mt-4"
-      />
+        onChange={(event) => setOutcome(event.target.value as VisitOutcome | "")}
+        className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-base outline-none focus:border-brand"
+      >
+        <option value="">Not sure yet</option>
+        {OUTCOMES.map((value) => (
+          <option key={value} value={value}>
+            {OUTCOME_LABEL[value]}
+          </option>
+        ))}
+      </select>
 
       {error && (
         <p role="alert" className="mt-3 text-sm text-danger">

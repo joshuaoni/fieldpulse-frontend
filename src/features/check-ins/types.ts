@@ -1,6 +1,14 @@
 import type { PairMember } from "@/lib/pairs";
+import type { VisitOutcome } from "@/lib/outcomes";
 
 export type CheckInStatus = "FLAGGED" | "PENDING" | "VERIFIED";
+
+export interface CheckInReport {
+  notes: string;
+  outcome: VisitOutcome | null;
+  submittedAt: string;
+  by: { id: string; firstName: string; lastName: string };
+}
 
 export type CheckInConcern =
   | "FAR_FROM_ADDRESS"
@@ -26,6 +34,7 @@ export interface CheckIn {
   accuracyM: number | null;
   departureAccuracyM: number | null;
   dayProgress: { done: number; total: number };
+  report: CheckInReport | null;
 }
 
 export interface CheckInCounts {

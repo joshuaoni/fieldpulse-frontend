@@ -1,4 +1,5 @@
 import { api } from "@/lib/api-client";
+import type { VisitOutcome } from "@/lib/outcomes";
 import type { Visit, VisitFilters, VisitListResponse } from "./types";
 
 /**
@@ -81,7 +82,7 @@ export async function checkOut({
 export interface ReportPayload {
   visitId: string;
   notes: string;
-  outcome?: string;
+  outcome?: VisitOutcome;
 }
 
 export async function submitReport({ visitId, notes, outcome }: ReportPayload): Promise<Visit> {

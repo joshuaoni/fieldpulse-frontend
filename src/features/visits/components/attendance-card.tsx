@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { outcomeLabel } from "@/lib/outcomes";
 import type { VisitAttendance } from "../types";
 import { DeviceTimeNote } from "./device-time-note";
 
@@ -59,7 +60,7 @@ export function AttendanceCard({
       {attendance.report ? (
         <div className="mt-4 border-t border-border pt-4">
           {attendance.report.outcome && (
-            <p className="text-sm font-medium">{attendance.report.outcome}</p>
+            <p className="text-sm font-medium">{outcomeLabel(attendance.report.outcome)}</p>
           )}
           <p className="mt-1 whitespace-pre-wrap text-sm">{attendance.report.notes}</p>
           <p className="mt-2 text-xs text-muted">

@@ -36,7 +36,7 @@ const linked: LeadEngagement = {
       id: "v1",
       scheduledFor: "2026-09-20T08:00:00.000Z",
       status: "COMPLETED",
-      outcome: "interested",
+      outcome: "INTERESTED",
       submittedAt: null,
     },
   ],
@@ -57,7 +57,7 @@ describe("LeadEngagementPanel", () => {
 
     const link = await screen.findByRole("link", { name: "View in Chatwoot" });
     expect(link.getAttribute("href")).toBe(linked.chatwootContactUrl);
-    expect(screen.getByText("interested")).toBeTruthy();
+    expect(screen.getByText("Interested")).toBeTruthy();
   });
 
   it("offers a Link to Chatwoot button when there is no contact yet", async () => {

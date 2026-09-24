@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { config } from "@/lib/config";
 import { ApiError } from "@/lib/errors";
+import { outcomeLabel } from "@/lib/outcomes";
 import { useSession } from "@/lib/session";
 import { useLeadEngagementByChatwootContact } from "../hooks";
 
@@ -115,7 +116,7 @@ export function ChatwootDashboardAppScreen() {
           {engagement.visits.map((visit) => (
             <li key={visit.id} className="flex items-center justify-between gap-3 py-2">
               <span className="text-muted">{stamp(visit.scheduledFor)}</span>
-              <span className="truncate text-right">{visit.outcome ?? visit.status}</span>
+              <span className="truncate text-right">{outcomeLabel(visit.outcome) ?? visit.status}</span>
             </li>
           ))}
         </ul>

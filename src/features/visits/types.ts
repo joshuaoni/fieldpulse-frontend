@@ -1,3 +1,4 @@
+import type { VisitOutcome } from "@/lib/outcomes";
 import type { PairMember } from "@/lib/pairs";
 
 export type VisitStatus = "PLANNED" | "CHECKED_IN" | "COMPLETED" | "MISSED";
@@ -5,7 +6,7 @@ export type VisitStatus = "PLANNED" | "CHECKED_IN" | "COMPLETED" | "MISSED";
 export interface VisitReport {
   id: string;
   notes: string;
-  outcome: string | null;
+  outcome: VisitOutcome | null;
   submittedAt: string;
 }
 

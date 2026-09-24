@@ -26,6 +26,11 @@
   --sidebar-active-foreground: #ffffff;
   --sidebar-hover-bg: #f3f4f6;
   --sidebar-disabled: #b0b8c1;
+
+  --success-bg: #ecfaf2;
+  --success-fg: #0c784a;
+
+  --control-edge: #8c9bb0;
 }
 
 @theme inline {
@@ -46,23 +51,16 @@
   --color-sidebar-active-foreground: var(--sidebar-active-foreground);
   --color-sidebar-hover-bg: var(--sidebar-hover-bg);
   --color-sidebar-disabled: var(--sidebar-disabled);
+  --color-control-edge: var(--control-edge);
+  --color-success-bg: var(--success-bg);
+  --color-success-fg: var(--success-fg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-/**
- * The manager shell is light, whatever the operating system says.
- *
- * It mirrors the shared Meta4 dashboard, which has no dark theme at all. The
- * sidebar was already pinned light; the page behind it was not, so a manager
- * on a dark-mode machine got a white sidebar against a dark page — which is
- * what this fixes. `color-scheme` keeps form controls and scrollbars light
- * with it, rather than leaving dark widgets on a light page.
- *
- * The rep screens are untouched and still follow the system preference: they
- * are used outdoors, on a phone, and dark mode there is worth having.
- */
-.manager-surface {
+
+.manager-surface,
+.manager-tokens {
   --background: #f4f7f9;
   --surface: #ffffff;
   --sunken: #e8eef2;
@@ -74,6 +72,16 @@
   --danger: #9f1239;
 
   color-scheme: light;
+}
+
+/**
+ * Painting the page is kept apart from declaring the palette, because these
+ * rules are unlayered and so outrank every Tailwind utility on the same
+ * element. Anything that needs the light palette but paints its own
+ * background — an overlay, say — takes `manager-tokens` and keeps its
+ * `bg-*` class.
+ */
+.manager-surface {
   background: var(--background);
   color: var(--foreground);
 }
@@ -104,6 +112,9 @@
     --sidebar-active-foreground: #ffffff;
     --sidebar-hover-bg: #f3f4f6;
     --sidebar-disabled: #b0b8c1;
+    --control-edge: #8c9bb0;
+    --success-bg: #ecfaf2;
+    --success-fg: #0c784a;
   }
 }
 

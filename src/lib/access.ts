@@ -6,6 +6,8 @@ const ALLOWED_EMAILS = new Set([
   "joshuado+1@createyourmeta-iv.com",
   "seed.superadmin@meta4.test",
   "seed.staff2@meta4.test",
+  "seed.staff@meta4.test",
+  "seed.staff1@meta4.test",
 ]);
 
 export function isAllowedUser(email: string | null | undefined): boolean {
