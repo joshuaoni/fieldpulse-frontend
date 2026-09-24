@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Plus, RotateCw } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import type { PairMember } from "@/lib/pairs";
+import { MemberAvatars } from "@/components/ui/member-avatars";
 import { useAdjustStop, useGeneratePlans, usePlans, usePublishWeek, useRemoveStop } from "../hooks";
 import {
   DAY_NAMES,
@@ -49,28 +49,6 @@ function formatWeekRange(weekStart: string): string {
     : `${month(start)} ${day(start)} – ${month(end)} ${day(end)}`;
 }
 
-function initialsOf(member: PairMember): string {
-  return member.user.firstName.charAt(0).toUpperCase();
-}
-
-function PairAvatars({ members }: { members: PairMember[] }) {
-  const shown = members.slice(0, 2);
-  if (shown.length === 0) return null;
-
-  return (
-    <div className="flex shrink-0 -space-x-2">
-      {shown.map((member) => (
-        <span
-          key={member.user.id}
-          className="flex size-7 items-center justify-center rounded-full border-2 border-surface bg-sidebar-active-bg text-xs font-medium text-sidebar-active-foreground"
-        >
-          {initialsOf(member)}
-        </span>
-      ))}
-    </div>
-  );
-}
-
 function StatCard({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border bg-surface p-4">
@@ -110,12 +88,10 @@ export function PlanWeekGrid() {
 
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" onClick={() => setWeekStart(shiftWeeks(weekStart, -1))}>
-            <ChevronLeft size={18} aria-hidden />
             Previous
           </Button>
           <Button variant="outline" onClick={() => setWeekStart(shiftWeeks(weekStart, 1))}>
             Next
-            <ChevronRight size={18} aria-hidden />
           </Button>
           <Button
             variant="outline"
@@ -255,14 +231,9 @@ function PlanRow({
             aria-expanded={expanded}
             className="flex min-h-11 w-full items-center gap-3 text-left"
           >
-            <PairAvatars members={members} />
+            <MemberAvatars users={members.map((member) => member.user)} />
             <span className="min-w-0">
               <span className="block truncate font-medium">{name}</span>
-              <span
-                className={`text-xs ${live ? "text-brand" : plan.status === "DRAFT" ? "text-muted" : "text-sidebar-disabled"}`}
-              >
-                {plan.status === "DRAFT" ? "Draft" : live ? "Published" : "Archived"}
-              </span>
             </span>
           </button>
         </td>

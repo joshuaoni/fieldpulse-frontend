@@ -38,6 +38,12 @@ const linked: LeadEngagement = {
       status: "COMPLETED",
       outcome: "INTERESTED",
       submittedAt: null,
+      notes: null,
+      pair: {
+        id: "pair-1",
+        name: null,
+        members: [{ user: { id: "u1", firstName: "Tunde", lastName: "Bello" } }],
+      },
     },
   ],
 };

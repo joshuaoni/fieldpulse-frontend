@@ -1,6 +1,11 @@
-import { fullName, type PairUser } from "../types";
+export interface AvatarUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  profileImageUrl?: string | null;
+}
 
-export function MemberAvatars({ users }: { users: PairUser[] }) {
+export function MemberAvatars({ users }: { users: AvatarUser[] }) {
   if (!users.length) return null;
 
   return (
@@ -8,7 +13,7 @@ export function MemberAvatars({ users }: { users: PairUser[] }) {
       {users.map((user) => (
         <span
           key={user.id}
-          title={fullName(user)}
+          title={`${user.firstName} ${user.lastName}`.trim()}
           className="flex size-7 items-center justify-center overflow-hidden rounded-full bg-sunken text-[10px] font-medium text-muted ring-2 ring-surface"
         >
           {user.profileImageUrl ? (

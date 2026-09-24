@@ -6,9 +6,11 @@
  * offline, web push, and (Android only) Notification Triggers for reminders
  * that fire with no connectivity. See the implementation plan, Phases 1 & 4.
  *
- * Bump CACHE_VERSION whenever the precached shell changes.
+ * Bump CACHE_VERSION whenever the precached shell changes: activate deletes
+ * every cache not named by the current version, which is what clears a stale
+ * one off a machine that already has it.
  */
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const SHELL_CACHE = `fieldpulse-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `fieldpulse-runtime-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";
@@ -43,6 +45,18 @@ self.addEventListener("activate", (event) => {
 
 const isApiRequest = (url) => url.pathname.startsWith("/api/");
 
+/**
+ * Whether built assets may be cached and served forever.
+ *
+ * A build gives `/_next/static/` content-hashed URLs, so a cached one can
+ * never be wrong. A dev server reuses those same paths across rebuilds, so a
+ * cached one is wrong the moment anything is edited — the page comes back
+ * holding chunks from a previous build and fails to start.
+ */
+const ASSETS_ARE_IMMUTABLE = !["localhost", "127.0.0.1", "[::1]"].includes(
+  self.location.hostname,
+);
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
@@ -71,7 +85,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/")) {
+  if (
+    ASSETS_ARE_IMMUTABLE &&
+    (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/"))
+  ) {
     event.respondWith(
       (async () => {
         const cached = await caches.match(request);

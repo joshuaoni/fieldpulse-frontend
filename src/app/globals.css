@@ -30,6 +30,11 @@
   --success-bg: #ecfaf2;
   --success-fg: #0c784a;
 
+  --chip-bg: #f3f5f8;
+  --chip-edge: #d2d9e4;
+  --chip-active-bg: #edf4ff;
+  --chip-active-edge: #347ff4;
+
   --control-edge: #8c9bb0;
 }
 
@@ -54,6 +59,10 @@
   --color-control-edge: var(--control-edge);
   --color-success-bg: var(--success-bg);
   --color-success-fg: var(--success-fg);
+  --color-chip-bg: var(--chip-bg);
+  --color-chip-edge: var(--chip-edge);
+  --color-chip-active-bg: var(--chip-active-bg);
+  --color-chip-active-edge: var(--chip-active-edge);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -115,6 +124,10 @@
     --control-edge: #8c9bb0;
     --success-bg: #ecfaf2;
     --success-fg: #0c784a;
+    --chip-bg: #f3f5f8;
+    --chip-edge: #d2d9e4;
+    --chip-active-bg: #edf4ff;
+    --chip-active-edge: #347ff4;
   }
 }
 

@@ -40,6 +40,7 @@ export function ManagerTopbar({ onOpenSidebar }: { onOpenSidebar: () => void }) 
             className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-sidebar-hover-bg"
           >
             {user.profileImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={user.profileImageUrl}
                 alt=""

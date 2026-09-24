@@ -4,10 +4,10 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Pencil, Plus, Search } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { MemberAvatars } from "@/components/ui/member-avatars";
 import { pairLabel } from "@/lib/pairs";
 import { usePairs } from "../hooks";
 import { matchesRep, openMembers, type SalesPair } from "../types";
-import { MemberAvatars } from "./member-avatars";
 import { PairingForm } from "./pairing-form";
 
 function startOfDay(date: Date): Date {

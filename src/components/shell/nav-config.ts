@@ -2,10 +2,8 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   CalendarDays,
-  CalendarOff,
   ClipboardList,
   LayoutGrid,
-  ListChecks,
   MapPinned,
   Users,
 } from "lucide-react";
@@ -35,15 +33,15 @@ export const MANAGER_NAV: NavSectionConfig[] = [
     label: "Field analysis",
     items: [
       { label: "Reps & pairs", href: "/manager/pairs", icon: Users },
-      { label: "Leads & routes", href: "/manager/leads", icon: MapPinned, disabled: true },
-      { label: "Reports", href: "/manager/reports", icon: BarChart3, disabled: true },
+      { label: "Leads", href: "/manager/leads", icon: MapPinned },
+      { label: "Reports", href: "/manager/reports", icon: BarChart3 },
     ],
   },
-  {
-    label: "System settings",
-    items: [
-      { label: "Apply for leave", href: "/manager/leave", icon: CalendarOff, disabled: true },
-      { label: "My tasks", href: "/manager/tasks", icon: ListChecks, disabled: true },
-    ],
-  },
+  // {
+  //   label: "System settings",
+  //   items: [
+  //     { label: "Apply for leave", href: "/manager/leave", icon: CalendarOff, disabled: true },
+  //     { label: "My tasks", href: "/manager/tasks", icon: ListChecks, disabled: true },
+  //   ],
+  // },
 ];

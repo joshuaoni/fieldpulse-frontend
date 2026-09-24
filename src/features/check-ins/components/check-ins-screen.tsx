@@ -109,8 +109,6 @@ export function CheckInsScreen() {
       )}
 
       {open && <CheckInDetail checkIn={open} onClose={() => setOpenId(null)} />}
-
-      <Note />
     </div>
   );
 }
@@ -202,12 +200,3 @@ function CheckInRow({ checkIn, onOpen }: { checkIn: CheckIn; onOpen: () => void 
   );
 }
 
-function Note() {
-  return (
-    <p className="mt-4 rounded-xl border border-border bg-surface p-4 text-sm text-muted">
-      Flagged means the record does not line up — the location is far from the address, too
-      imprecise to place, or missing. It is not a judgement about the rep. Verified means that rep
-      checked out and the visit has been written up.
-    </p>
-  );
-}
