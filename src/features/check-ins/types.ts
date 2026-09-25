@@ -16,7 +16,8 @@ export type CheckInConcern =
   | "NO_LOCATION"
   | "LEFT_FROM_ELSEWHERE"
   | "IMPRECISE_DEPARTURE"
-  | "NO_DEPARTURE_LOCATION";
+  | "NO_DEPARTURE_LOCATION"
+  | "DEVICE_CLOCK_WRONG";
 
 export interface CheckIn {
   attendanceId: string;
@@ -28,6 +29,7 @@ export interface CheckIn {
   lead: { id: string; companyName: string; address: string | null };
   rep: { id: string; firstName: string; lastName: string };
   checkInAt: string;
+  verifiedAt: string;
   photoUrl: string | null;
   distanceM: number | null;
   departureDistanceM: number | null;
@@ -65,6 +67,8 @@ export function describeConcerns(checkIn: CheckIn): string {
         return `departure only accurate to ${formatDistance(checkIn.departureAccuracyM)}`;
       case "NO_DEPARTURE_LOCATION":
         return "no departure location";
+      case "DEVICE_CLOCK_WRONG":
+        return "the phone's clock disagreed with the server";
     }
   });
 

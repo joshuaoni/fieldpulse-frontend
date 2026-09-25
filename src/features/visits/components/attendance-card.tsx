@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { outcomeLabel } from "@/lib/outcomes";
 import type { VisitAttendance } from "../types";
+import { arrivedAt, leftAt } from "../time";
 import { DeviceTimeNote } from "./device-time-note";
 
 const stamp = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : "â€”");
@@ -12,9 +13,11 @@ const stamp = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : "â
 export function AttendanceCard({
   attendance,
   isYou,
+  visitCreatedAt,
 }: {
   attendance: VisitAttendance;
   isYou: boolean;
+  visitCreatedAt?: string;
 }) {
   const name = attendance.rep
     ? `${attendance.rep.firstName} ${attendance.rep.lastName}`
@@ -30,7 +33,7 @@ export function AttendanceCard({
       <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
         <dt className="text-muted">Checked in</dt>
         <dd>
-          {stamp(attendance.checkInAt)}
+          {stamp(arrivedAt(attendance, visitCreatedAt))}
           <DeviceTimeNote
             verifiedAt={attendance.checkInAt}
             deviceAt={attendance.clientLocalCheckInAt}
@@ -38,7 +41,7 @@ export function AttendanceCard({
         </dd>
         <dt className="text-muted">Checked out</dt>
         <dd>
-          {stamp(attendance.checkOutAt)}
+          {stamp(leftAt(attendance, visitCreatedAt))}
           <DeviceTimeNote
             verifiedAt={attendance.checkOutAt}
             deviceAt={attendance.clientLocalCheckOutAt}

@@ -7,6 +7,7 @@ import { OUTCOMES, OUTCOME_LABEL, type VisitOutcome } from "@/lib/outcomes";
 import { getCurrentPosition, isCancelled, type Fix } from "@/lib/geolocation";
 import { secondsSince, useTicker } from "@/lib/use-elapsed";
 import { messageUnlessCancelled } from "./position-search";
+import { arrivedAt } from "../time";
 import { useCheckIn, useCheckOut, useQueuedFor, useSubmitReport } from "../hooks";
 import { myAttendance, type SubmittedReport, type Visit, type VisitAttendance } from "../types";
 import { CameraCapture } from "./camera-capture";
@@ -49,6 +50,7 @@ export function VisitActions({
         visitId={visit.id}
         repId={repId}
         attendance={mine}
+        visitCreatedAt={visit.createdAt}
         arrivalQueued={queued.has("check-in")}
       />
     );
@@ -338,11 +340,13 @@ function CheckOutStep({
   visitId,
   repId,
   attendance,
+  visitCreatedAt,
   arrivalQueued,
 }: {
   visitId: string;
   repId: string;
   attendance: VisitAttendance | undefined;
+  visitCreatedAt: string;
   arrivalQueued: boolean;
 }) {
   const checkOut = useCheckOut();
@@ -350,6 +354,8 @@ function CheckOutStep({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const sending = useSending();
+
+  const arrival = attendance ? arrivedAt(attendance, visitCreatedAt) : null;
 
   async function submit() {
     if (!position.fix) return;
@@ -396,10 +402,12 @@ function CheckOutStep({
 
       <GpsStatus lock={position} />
 
-      {attendance?.checkInAt && (
+      {arrival && (
         <div className="mt-4 rounded-xl border border-border p-4">
           <p className="text-sm font-medium">Check in Time:</p>
-          <p className="text-sm text-muted tabular-nums">{time(attendance.checkInAt)}</p>
+          {/* When the rep arrived, not when the queue drained — those are the
+              same moment only when there was a signal at the door. */}
+          <p className="text-sm text-muted tabular-nums">{time(arrival)}</p>
         </div>
       )}
 

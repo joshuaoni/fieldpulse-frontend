@@ -22,6 +22,7 @@ const checkIn = (overrides: Partial<CheckIn> = {}): CheckIn => ({
   lead: { id: "lead-1", companyName: "Capital Starters", address: "Ikoyi, Lagos Nigeria" },
   rep: REP,
   checkInAt: "2026-09-23T13:15:00.000Z",
+  verifiedAt: "2026-09-23T13:15:00.000Z",
   photoUrl: "https://signed.test/a.jpg",
   distanceM: 40,
   departureDistanceM: 40,
