@@ -15,9 +15,9 @@ import {
   stopsByDay,
   type Office,
   type Plan,
+  type PlannedStop,
 } from "../types";
 import { DayRoute } from "./day-route";
-import { StopCard } from "./stop-card";
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong";
@@ -145,7 +145,7 @@ export function PlanWeekGrid() {
       {plans && plans.length > 0 && (
         <div className="overflow-hidden rounded-xl border border-border bg-surface">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[46rem] text-left text-sm">
+            <table className="w-full min-w-184 text-left text-sm">
               <thead>
                 <tr className="border-b border-border text-xs font-medium uppercase tracking-wide text-muted">
                   <th scope="col" className="px-4 py-3 font-medium">
@@ -219,7 +219,7 @@ function PlanRow({
   const members = plan.pair?.members ?? [];
 
   const [expanded, setExpanded] = useState(false);
-  const [openDay, setOpenDay] = useState<number | null>(null);
+  const [openDay, setOpenDay] = useState(0);
 
   return (
     <>
@@ -272,93 +272,73 @@ function PlanRow({
               </p>
             )}
 
-            {/* Scrolls sideways on a narrow viewport rather than crushing five columns. */}
-            <div className="overflow-x-auto">
-              <div className="grid min-w-[52rem] grid-cols-5 gap-3">
-                {days.map((stops, dayIndex) => {
-                  const driving = dayDriveMinutes(stops);
-                  return (
-                    <div key={DAY_NAMES[dayIndex]}>
-                      <h3 className="mb-2 flex flex-wrap items-center gap-1 text-xs font-medium text-muted">
-                        <button
-                          type="button"
-                          disabled={stops.length === 0}
-                          aria-expanded={openDay === dayIndex}
-                          onClick={() =>
-                            setOpenDay((open) => (open === dayIndex ? null : dayIndex))
-                          }
-                          className="min-h-11 disabled:cursor-default enabled:underline enabled:decoration-dotted enabled:underline-offset-4 enabled:hover:text-foreground"
-                        >
-                          {DAY_NAMES[dayIndex]}
-                          {stops.length > 0 && ` · ${stops.length}`}
-                        </button>
+            <DayTabs days={days} selected={openDay} onSelect={setOpenDay} />
 
-                        {dayIsEstimated(stops) && (
-                          <span
-                            title="Ordered by straight-line distance — the maps service was unavailable for this day"
-                            className="rounded-full border border-border px-1.5 py-0.5 text-[10px] font-normal"
-                          >
-                            estimated
-                          </span>
-                        )}
-                      </h3>
-
-                      {stops.length > 0 && (
-                        <p className="mb-2 text-xs tabular-nums text-muted">
-                          {driving === null
-                            ? "driving time not known"
-                            : `${formatMinutes(driving)} driving`}
-                        </p>
-                      )}
-
-                      {stops.length === 0 ? (
-                        <p className="rounded-lg border border-dashed border-border p-3 text-xs text-muted">
-                          Nothing planned
-                        </p>
-                      ) : (
-                        <ul>
-                          {stops.map((stop, position) => (
-                            <StopCard
-                              key={stop.id}
-                              stop={stop}
-                              position={position}
-                              otherPlans={otherPlans}
-                              editable={editable}
-                              busy={busy}
-                              onMoveDay={(day) => onAdjust(stop.id, { dayIndex: day })}
-                              onMovePair={(targetPlanId) => onAdjust(stop.id, { targetPlanId })}
-                              onRemove={() => onRemove(stop.id)}
-                            />
-                          ))}
-
-                          {stops[stops.length - 1].returnMinutes !== null && (
-                            <li className="ml-2.5 flex flex-col border-l border-dashed border-border py-1 pl-3.5 text-[11px] text-muted">
-                              <span className="tabular-nums">
-                                {formatMinutes(stops[stops.length - 1].returnMinutes as number)}
-                              </span>
-                              <span>back to the office</span>
-                            </li>
-                          )}
-                        </ul>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {openDay !== null && (
-              <DayRoute
-                dayIndex={openDay}
-                date={days[openDay][0]?.scheduledFor?.slice(0, 10) ?? null}
-                stops={days[openDay]}
-                office={office}
-                pairName={name}
-              />
-            )}
+            <DayRoute
+              dayIndex={openDay}
+              stops={days[openDay]}
+              office={office}
+              otherPlans={otherPlans}
+              editable={editable}
+              busy={busy}
+              onAdjust={onAdjust}
+              onRemove={onRemove}
+            />
           </td>
         </tr>
       )}
     </>
+  );
+}
+
+function DayTabs({
+  days,
+  selected,
+  onSelect,
+}: {
+  days: PlannedStop[][];
+  selected: number;
+  onSelect: (dayIndex: number) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {days.map((stops, dayIndex) => {
+        const driving = dayDriveMinutes(stops);
+        const active = dayIndex === selected;
+
+        return (
+          <button
+            key={DAY_NAMES[dayIndex]}
+            type="button"
+            onClick={() => onSelect(dayIndex)}
+            aria-pressed={active}
+            className={`min-w-28 rounded-lg border px-3 py-2 text-left ${
+              active
+                ? "border-chip-active-edge bg-chip-active-bg"
+                : "border-chip-edge bg-chip-bg hover:border-control-edge"
+            }`}
+          >
+            <span className="flex items-center gap-1.5 text-sm font-medium">
+              {DAY_NAMES[dayIndex]}
+              {dayIsEstimated(stops) && (
+                <span
+                  title="Ordered by straight-line distance — the maps service was unavailable"
+                  className="rounded bg-sunken px-1 text-[10px] font-normal text-muted"
+                >
+                  est.
+                </span>
+              )}
+            </span>
+            <span className="block text-xs text-muted tabular-nums">
+              {stops.length === 0
+                ? "Nothing planned"
+                : `${stops.length} ${stops.length === 1 ? "stop" : "stops"}${
+                    driving === null ? "" : ` · ${formatMinutes(driving)}`
+                  }`}
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
