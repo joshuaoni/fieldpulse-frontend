@@ -20,7 +20,11 @@ export function VisitDetail({ visitId }: { visitId: string }) {
   const { data: visit, isPending, isError, error } = useVisit(visitId);
 
   if (isPending) return <p className="text-sm text-muted">Loading…</p>;
-  if (isError) {
+
+  // Only when there is nothing to show. A refresh that failed while the rep
+  // is standing in a shop with no signal must not take the visit off the
+  // screen — what is held is what they need to check out.
+  if (isError && !visit) {
     return (
       <p role="alert" className="text-sm text-danger">
         {error instanceof Error ? error.message : "Could not load this visit"}

@@ -42,10 +42,33 @@ export function useTeamVisits(filters: VisitFilters = {}) {
   });
 }
 
+/**
+ * A visit this rep has already seen in a list, if any list still holds it.
+ *
+ * The list screens carry the whole record, attendances and all, so a rep who
+ * has loaded their day has everything the visit screen needs without asking
+ * the server again.
+ */
+function visitFromLists(client: QueryClient, id: string): Visit | undefined {
+  for (const [, held] of client.getQueriesData<VisitListResponse>({ queryKey: visitKeys.all })) {
+    const found = held?.visits?.find((visit) => visit.id === id);
+    if (found) return found;
+  }
+
+  return undefined;
+}
+
 export function useVisit(id: string) {
+  const queryClient = useQueryClient();
+
   return useQuery<Visit>({
     queryKey: visitKeys.detail(id),
     queryFn: () => visitsApi.fetchVisit(id),
+    // Enough to check out on with no connection at all. Dated to the epoch so
+    // it counts as stale: the server's own copy is fetched the moment there
+    // is a network to fetch it over.
+    initialData: () => visitFromLists(queryClient, id),
+    initialDataUpdatedAt: 0,
   });
 }
 

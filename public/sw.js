@@ -46,6 +46,19 @@ self.addEventListener("activate", (event) => {
 const isApiRequest = (url) => url.pathname.startsWith("/api/");
 
 /**
+ * Whether this is the router asking for a route rather than the browser
+ * asking for a page.
+ *
+ * A tap inside the app never produces a navigation request: the router fetches
+ * the route's flight payload, which arrives as an ordinary GET this worker
+ * used to ignore. Offline that fetch failed, the router fell back to a full
+ * page load, and the full page load landed on the offline screen — even for a
+ * visit the rep had open a minute earlier.
+ */
+const isRouteRequest = (request, url) =>
+  url.searchParams.has("_rsc") || request.headers.get("RSC") === "1";
+
+/**
  * Whether built assets may be cached and served forever.
  *
  * A build gives `/_next/static/` content-hashed URLs, so a cached one can
@@ -79,6 +92,29 @@ self.addEventListener("fetch", (event) => {
           return (
             (await caches.match(request)) ?? (await caches.match(OFFLINE_URL)) ?? Response.error()
           );
+        }
+      })(),
+    );
+    return;
+  }
+
+  // Route payloads: network first for the same reason, then whatever was kept
+  // from the last time this route was opened. The query string is only a
+  // build-specific hash, so it is ignored on the way back out — the path is
+  // what identifies the route.
+  if (isRouteRequest(request, url)) {
+    event.respondWith(
+      (async () => {
+        try {
+          const response = await fetch(request);
+          const cache = await caches.open(RUNTIME_CACHE);
+          cache.put(request, response.clone());
+          return response;
+        } catch {
+          // No offline-screen fallback here: a route payload that cannot be
+          // served has to fail, so the router falls back to a full page load
+          // and the branch above answers it.
+          return (await caches.match(request, { ignoreSearch: true })) ?? Response.error();
         }
       })(),
     );
