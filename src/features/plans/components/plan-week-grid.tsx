@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Plus, RotateCw } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, RotateCw } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { MemberAvatars } from "@/components/ui/member-avatars";
