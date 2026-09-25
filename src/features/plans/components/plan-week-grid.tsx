@@ -139,7 +139,7 @@ export function PlanWeekGrid() {
       {isPending && <p className="text-sm text-muted">Loading the week…</p>}
 
       {plans && plans.length === 0 && (
-        <p className="rounded-xl border border-dashed border-border p-6 text-sm text-muted">
+        <p className="rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
           No plans for this week yet. Regenerate to propose one per pair.
         </p>
       )}

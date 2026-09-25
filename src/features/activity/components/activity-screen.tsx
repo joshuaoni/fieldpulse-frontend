@@ -131,7 +131,7 @@ export function ActivityScreen() {
       {isPending && <p className="mt-6 text-sm text-muted">Loading…</p>}
 
       {data && events.length === 0 && (
-        <p className="mt-6 rounded-xl border border-dashed border-border p-6 text-sm text-muted">
+        <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
           {chips > 0 || search
             ? "Nothing matches what you are looking for."
             : "Nothing has happened yet. Activity will appear here as it does."}

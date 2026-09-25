@@ -89,7 +89,7 @@ export function CheckInsScreen() {
       {isPending && <p className="mt-6 text-sm text-muted">Loading…</p>}
 
       {data && data.checkIns.length === 0 && (
-        <p className="mt-6 rounded-xl border border-dashed border-border p-6 text-sm text-muted">
+        <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
           {status
             ? `Nothing ${STATUS_LABEL[status].toLowerCase()} this week.`
             : "No check-ins recorded this week yet."}

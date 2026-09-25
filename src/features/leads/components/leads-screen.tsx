@@ -260,7 +260,7 @@ function LeadsTab({ tab, onTab }: { tab: Tab; onTab: (tab: Tab) => void }) {
       {isPending && <p className="mt-6 text-sm text-muted">Loading…</p>}
 
       {data?.leads.length === 0 && (
-        <p className="mt-6 rounded-xl border border-dashed border-border p-6 text-sm text-muted">
+        <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
           {search ? `No lead matches "${search}".` : "No leads yet."}
         </p>
       )}

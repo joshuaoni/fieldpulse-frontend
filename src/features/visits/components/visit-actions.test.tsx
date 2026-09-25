@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VisitActions } from "./visit-actions";
+import { flush } from "@/lib/offline-queue";
 import type { Visit, VisitAttendance } from "../types";
 
 const checkIn = vi.fn();
@@ -39,10 +40,13 @@ beforeEach(() => {
   getCurrentPosition.mockResolvedValue({ lat: 6.6, lng: 3.35, accuracyM: 8 });
 });
 
-afterEach(() => {
+afterEach(async () => {
   cleanup();
   vi.clearAllMocks();
   Object.defineProperty(navigator, "onLine", { configurable: true, value: true });
+  // The queue is a real IndexedDB and outlives a test, and the screens now
+  // read it: anything left behind would check the next test's rep in.
+  await flush(async () => "done");
 });
 
 const attendance = (overrides: Partial<VisitAttendance> = {}): VisitAttendance =>
@@ -251,7 +255,7 @@ describe("when the location will not come", () => {
  * the queue drains — so the screen has to say why it still looks the same.
  */
 describe("with no connection", () => {
-  it("says a check-in is saved on the phone", async () => {
+  const checkInOffline = async () => {
     Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
     show(visit([attendance()]));
 
@@ -261,8 +265,38 @@ describe("with no connection", () => {
       expect(screen.getByText("Check in").closest("button")).toHaveProperty("disabled", false),
     );
     fireEvent.click(screen.getByText("Check in"));
+  };
+
+  it("says a check-in is saved on the phone", async () => {
+    await checkInOffline();
 
     expect(await screen.findByText(/saved on this phone/)).toBeDefined();
+  });
+
+  /**
+   * The bug this covers: a queued check-in comes back with no visit, so the
+   * screen stayed on the check-in step with a live button. Reps tapped it
+   * again, and again — one arrival, twelve queued check-ins, each carrying
+   * its own photo.
+   */
+  it("moves on to the check-out rather than offering the check-in again", async () => {
+    await checkInOffline();
+
+    expect(await screen.findByText("Check Out")).toBeDefined();
+    expect(screen.queryByText("Check in")).toBeNull();
+  });
+
+  // The queue outlives the screen, so the answer has to come from the queue
+  // rather than from what the component happens to remember.
+  it("still knows the rep has arrived when the screen is opened again", async () => {
+    await checkInOffline();
+    await screen.findByText("Check Out");
+
+    cleanup();
+    show(visit([attendance()]));
+
+    expect(await screen.findByText("Check Out")).toBeDefined();
+    expect(screen.queryByText("Tap to capture a photo")).toBeNull();
   });
 });
 

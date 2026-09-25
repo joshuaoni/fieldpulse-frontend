@@ -19,11 +19,10 @@ async function drain() {
   await flush(async () => "done");
 }
 
-const checkIn = (visitId: string): QueuedAction => ({
+const checkIn = (visitId: string, fix = { lat: 6.6, lng: 3.35 }): QueuedAction => ({
   kind: "check-in",
   visitId,
-  lat: 6.6,
-  lng: 3.35,
+  ...fix,
   photo: new Blob(["jpeg-bytes"], { type: "image/jpeg" }),
   clientLocalAt: new Date().toISOString(),
 });
@@ -57,6 +56,51 @@ describe("offline queue", () => {
       expect(item.action.photo).toBeInstanceOf(Blob);
       expect(await item.action.photo.text()).toBe("jpeg-bytes");
     }
+  });
+
+  /**
+   * One arrival is one action however many times it was tapped. A rep whose
+   * screen has not moved on will tap again, and every tap used to leave its
+   * own copy behind — twelve queued check-ins for one visit, each holding a
+   * photo in storage.
+   */
+  it("keeps one action per kind per visit, however many times it is recorded", async () => {
+    await enqueue(checkIn("visit-1"));
+    await enqueue(checkIn("visit-1"));
+    await enqueue(checkIn("visit-1"));
+
+    expect(await count()).toBe(1);
+  });
+
+  it("keeps the last recording, not the first", async () => {
+    await enqueue(checkIn("visit-1"));
+    await enqueue(checkIn("visit-1", { lat: 6.7, lng: 3.4 }));
+
+    const [item] = await listQueued();
+    expect(item.action).toMatchObject({ lat: 6.7, lng: 3.4 });
+  });
+
+  // Replacing must not promote it past a check-out queued in between, which
+  // would send a departure the server has no arrival for.
+  it("leaves a replaced action where it stood in the queue", async () => {
+    await enqueue(checkIn("visit-1"));
+    await enqueue(checkOut("visit-1"));
+    await enqueue(checkIn("visit-1"));
+
+    const seen: string[] = [];
+    await flush(async (action) => {
+      seen.push(action.kind);
+      return "done";
+    });
+
+    expect(seen).toEqual(["check-in", "check-out"]);
+  });
+
+  it("still keeps the same action for a different visit apart", async () => {
+    await enqueue(checkIn("visit-1"));
+    await enqueue(checkIn("visit-2"));
+
+    expect(await count()).toBe(2);
   });
 
   // A check-out replayed before its check-in would be refused by the server,

@@ -64,7 +64,7 @@ export function VisitDetail({ visitId }: { visitId: string }) {
       )}
 
       {nobodyHasArrived && !iAmOnThisVisit && (
-        <p className="rounded-xl border border-dashed border-border p-6 text-sm text-muted">
+        <p className="rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
           Nobody has checked in to this visit yet.
         </p>
       )}

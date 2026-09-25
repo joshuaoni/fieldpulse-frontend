@@ -147,7 +147,7 @@ export function MyWeekScreen() {
       )}
 
       {data && stops.length === 0 && (
-        <p className="mt-3 rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted">
+        <p className="mt-3 rounded-2xl border border-dashed border-border-strong p-6 text-center text-sm text-muted">
           No calls planned for {DAY_NAMES[selected]}.
         </p>
       )}

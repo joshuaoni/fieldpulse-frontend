@@ -60,8 +60,8 @@ export function SearchTargetsTab() {
       {isPending && <p className="mt-6 text-sm text-muted">Loading…</p>}
 
       {targets?.length === 0 && (
-        <p className="mt-6 rounded-xl border border-dashed border-border p-6 text-sm text-muted">
-          No search targets yet. Add one to start discovering leads from Maps.
+        <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
+          No search targets yet. 
         </p>
       )}
 
