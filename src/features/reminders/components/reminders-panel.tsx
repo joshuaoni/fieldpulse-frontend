@@ -100,8 +100,8 @@ function MissedList({ reminders }: { reminders: Reminder[] }) {
       {reminders.map((reminder) => {
         const described = describeReminder(reminder);
         return (
-          <li key={reminder.id} className="rounded-lg border border-brand/40 bg-background p-3">
-            <p className="text-sm font-medium text-brand">{described.title}</p>
+          <li key={reminder.id} className="rounded-lg border border-border bg-background p-3">
+            <p className="text-sm font-medium">{described.title}</p>
             <p className="text-xs text-muted">
               {described.body} · due {time(reminder.scheduledFor)}
             </p>

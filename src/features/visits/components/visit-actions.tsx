@@ -1,200 +1,394 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { RotateCcw } from "lucide-react";
+import { CHIP, CHIP_OFF } from "@/components/ui/chip";
+import { OUTCOMES, OUTCOME_LABEL, type VisitOutcome } from "@/lib/outcomes";
+import { getCurrentPosition, isCancelled, type Fix } from "@/lib/geolocation";
 import { secondsSince, useTicker } from "@/lib/use-elapsed";
-import { Button } from "@/components/ui/button";
-import { TextField } from "@/components/ui/text-field";
-import { PositionSearchNotice, messageUnlessCancelled, usePositionSearch } from "./position-search";
+import { messageUnlessCancelled } from "./position-search";
 import { useCheckIn, useCheckOut, useSubmitReport } from "../hooks";
-import type { SubmittedReport, Visit, VisitAttendance } from "../types";
-import { myAttendance } from "../types";
+import { myAttendance, type SubmittedReport, type Visit, type VisitAttendance } from "../types";
 import { CameraCapture } from "./camera-capture";
 
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  if (isCancelled(error)) return "Cancelled.";
+  return error instanceof Error ? error.message : "Something went wrong.";
 }
 
-function phaseLabel(phase: Phase, seconds: number): string {
-  if (phase !== "saving") return "Getting your location…";
-  // Counted, so a stalled upload is visibly a stalled upload.
-  return seconds > 2 ? `Sending… ${seconds}s` : "Sending…";
-}
+const time = (iso: string) =>
+  new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 
-/**
- * The calling rep's next step for this visit.
- */
-export function VisitActions({ visit, repId }: { visit: Visit; repId: string }) {
-  const mine: VisitAttendance | undefined = myAttendance(visit, repId);
+export function VisitActions({
+  visit,
+  repId,
+  onSubmitted,
+}: {
+  visit: Visit;
+  repId: string;
+  onSubmitted: (result: { queued: boolean }) => void;
+}) {
+  const mine = myAttendance(visit, repId);
 
   if (!mine?.checkInAt) return <CheckInStep visitId={visit.id} />;
-  if (!mine.checkOutAt) return <CheckOutStep visitId={visit.id} />;
+  if (!mine.checkOutAt) return <CheckOutStep visitId={visit.id} attendance={mine} />;
   if (visit.report) return <AlreadyReported report={visit.report} repId={repId} />;
-  return <ReportStep visitId={visit.id} />;
+
+  return <ReportStep visitId={visit.id} onSubmitted={onSubmitted} />;
 }
 
-function AlreadyReported({ report, repId }: { report: SubmittedReport; repId: string }) {
-  const author = report.attendance?.rep;
-  const byMe = author?.id === repId;
-  const name = byMe ? "You" : (author?.firstName ?? "Your partner");
+/**
+ * The device's own reading of where it is.
+ */
+function usePositionLock() {
+  const [state, setState] = useState(() => ({
+    fix: null as Fix | null,
+    error: null as string | null,
+    searching: true,
+    startedAt: Date.now(),
+  }));
 
-  return (
-    <p className="mt-3 text-sm text-muted">
-      {name} wrote this visit up on{" "}
-      {new Date(report.submittedAt).toLocaleString([], {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })}
-      . A visit gets one report.
-    </p>
-  );
+  const abort = useRef<AbortController | null>(null);
+  const attempt = useRef(0);
+
+  const seconds = secondsSince(state.startedAt, useTicker(state.searching));
+
+  const search = useCallback(() => {
+    const controller = new AbortController();
+    abort.current?.abort();
+    abort.current = controller;
+
+    const mine = ++attempt.current;
+
+    getCurrentPosition({ signal: controller.signal })
+      .then((found) => {
+        // A late answer from a search already replaced must not win.
+        if (mine === attempt.current) setState((held) => ({ ...held, fix: found, error: null, searching: false }));
+      })
+      .catch((cause) => {
+        if (mine === attempt.current) {
+          setState((held) => ({
+            ...held,
+            fix: null,
+            error: messageUnlessCancelled(cause),
+            searching: false,
+          }));
+        }
+      });
+  }, []);
+
+  useEffect(() => {
+    search();
+    return () => abort.current?.abort();
+  }, [search]);
+
+  return {
+    ...state,
+    seconds,
+    ready: state.fix !== null,
+    retry: () => {
+      setState({ fix: null, error: null, searching: true, startedAt: Date.now() });
+      search();
+    },
+    cancel: () => abort.current?.abort(),
+  };
 }
 
-function QueuedNotice() {
+function GpsStatus({
+  lock,
+}: {
+  lock: ReturnType<typeof usePositionLock>;
+}) {
+  if (lock.fix) {
+    return (
+      <div className="mt-4 flex items-start gap-3">
+        <span
+          aria-hidden
+          className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-success-bg"
+        >
+          <span className="size-2 rounded-full bg-success-fg" />
+        </span>
+        <div>
+          <p className="text-sm font-medium text-success-fg">GPS Ready</p>
+          {lock.fix.accuracyM !== null && (
+            <p className="text-sm text-muted">Accuracy: {lock.fix.accuracyM}m</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (lock.searching) {
+    return (
+      <div role="status" className="mt-4">
+        <div className="flex items-start gap-3">
+          <span
+            aria-hidden
+            className="mt-0.5 size-4 shrink-0 animate-spin rounded-full border-2 border-border border-t-foreground"
+          />
+          <div>
+            <p className="text-sm font-medium">Capturing location… {lock.seconds}s</p>
+            <p className="text-sm text-muted">
+              Please hold steady while GPS improves accuracy. The first fix can take a minute —
+              stand where you can see the sky.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={lock.cancel}
+          className="mt-3 min-h-11 text-sm font-medium text-muted underline"
+        >
+          Stop searching
+        </button>
+      </div>
+    );
+  }
+
+  // Given up on, or failed. Either way the only way forward is to ask again.
   return (
-    <p role="status" className="mt-3 text-sm text-brand">
-      Saved on this device. It will sync when you have a connection.
-    </p>
+    <div className="mt-4">
+      <p role={lock.error ? "alert" : undefined} className="text-sm text-danger">
+        {lock.error ?? "No location yet."} A position is needed before you can go on.
+      </p>
+      <button
+        type="button"
+        onClick={lock.retry}
+        className="mt-2 min-h-11 text-sm font-medium underline"
+      >
+        Search again
+      </button>
+    </div>
   );
 }
 
 /**
- * A check-in is two waits with nothing to tell them apart on screen: finding
- * the rep, then sending the photo. Naming only the first one meant that once
- * the location had been found, a slow upload went on claiming the phone was
- * still looking for satellites — which is where an afternoon of chasing a
- * geolocation bug that was really an upload came from.
+ * How long a send has been going.
+ *
+ * Restored deliberately: a silent button during a slow upload is how an
+ * afternoon once went on chasing a geolocation bug that was really a photo
+ * crawling up a bad connection.
  */
-type Phase = "idle" | "locating" | "saving";
+function useSending() {
+  const [since, setSince] = useState(0);
+  const running = since !== 0;
+  const seconds = secondsSince(since, useTicker(running));
 
+  return {
+    running,
+    label: (verb: string) => (seconds > 2 ? `${verb}… ${seconds}s` : `${verb}…`),
+    start: () => setSince(Date.now()),
+    stop: () => setSince(0),
+  };
+}
+
+/**
+ * Saved on this device, not yet accepted by the server.
+ *
+ * The action counts as done — the rep may walk on — but the visit will not
+ * move until the queue drains, so the screen has to say why it still looks
+ * the same.
+ */
+function QueuedNotice({ what }: { what: string }) {
+  return (
+    <p role="status" className="mt-4 rounded-xl border border-border bg-sunken px-4 py-3 text-sm">
+      Your {what} is saved on this phone and will sync when you have a connection. You can carry
+      on.
+    </p>
+  );
+}
+
+/** A dark, full-width action, the way the phone screens end. */
+function PrimaryAction({
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }) {
+  return (
+    // Fixed rather than sticky: it should sit at the foot of the screen even
+    // when the content above it is short, which is most of this flow.
+    <div className="fixed inset-x-0 bottom-0 z-10 mx-auto w-full max-w-lg bg-background px-4 pt-3 pb-[max(1.75rem,calc(env(safe-area-inset-bottom)+0.75rem))]">
+      <button
+        type="button"
+        {...props}
+        className="h-13 w-full rounded-full bg-sidebar-active-bg text-base font-medium text-sidebar-active-foreground disabled:opacity-40"
+      >
+        {children}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Arrival: a photo and a position, and nothing recorded until both are in
+ * hand.
+ *
+ * No time is shown before checking in. The arrival time is stamped by the
+ * server, so any clock shown here would be the phone's own and might not be
+ * what ends up on the record.
+ */
 function CheckInStep({ visitId }: { visitId: string }) {
   const checkIn = useCheckIn();
+  const position = usePositionLock();
+  const [photo, setPhoto] = useState<Blob | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [phase, setPhase] = useState<Phase>("idle");
-  const [heldPhoto, setHeldPhoto] = useState<Blob | null>(null);
-  const position = usePositionSearch();
-  const [sendingSince, setSendingSince] = useState(0);
-  const busy = phase !== "idle";
-  const sendingFor = secondsSince(sendingSince, useTicker(phase === "saving"));
+  const [busy, setBusy] = useState(false);
+  const sending = useSending();
 
-  async function submit(photo: Blob) {
+  // Derived rather than stored, so nothing is set from inside an effect;
+  // the effect only releases it, since an object URL pins the photo in
+  // memory until it is revoked.
+  const preview = useMemo(() => (photo ? URL.createObjectURL(photo) : null), [photo]);
+
+  useEffect(() => {
+    if (!preview) return;
+    return () => URL.revokeObjectURL(preview);
+  }, [preview]);
+
+  async function submit() {
+    if (!photo || !position.fix) return;
+
     setError(null);
-    setPhase("locating");
+    setBusy(true);
+    sending.start();
     try {
-      const { lat, lng } = await position.locate();
-      setSendingSince(Date.now());
-      setPhase("saving");
-      await checkIn.mutateAsync({ visitId, lat, lng, photo });
-      setHeldPhoto(null);
+      await checkIn.mutateAsync({
+        visitId,
+        lat: position.fix.lat,
+        lng: position.fix.lng,
+        accuracyM: position.fix.accuracyM,
+        photo,
+      });
     } catch (cause) {
-      // The photo is kept either way, so a cancelled or failed search costs
-      // the rep the location only — never the trip back to the shop front.
-      setHeldPhoto(photo);
-      setError(messageUnlessCancelled(cause));
+      setError(message(cause));
     } finally {
-      setPhase("idle");
+      setBusy(false);
+      sending.stop();
     }
   }
 
-  if (checkIn.data?.queued) return <QueuedNotice />;
-
   return (
-    <section className="rounded-xl border border-border bg-surface p-4">
-      <h2 className="text-sm font-medium">Check in</h2>
-      <p className="mt-1 mb-3 text-sm text-muted">
-        Take a photo at the location. Your arrival time is recorded by the server, not by this
-        phone. Your partner checks in separately.
-      </p>
+    <section>
+      {preview ? (
+        <div className="rounded-2xl border border-dashed border-control-edge p-3">
+          {/* A blob taken on this phone; there is nothing for a loader to do. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt="The photo you just took" className="w-full rounded-xl" />
 
-      {heldPhoto ? (
-        <>
-          <p className="text-sm text-muted">Your photo is saved. Only the location is missing.</p>
-          <Button onClick={() => submit(heldPhoto)} disabled={busy} className="mt-3 w-full">
-            {phase === "idle" ? "Try again" : phaseLabel(phase, sendingFor)}
-          </Button>
-          {position.searching && (
-            <PositionSearchNotice seconds={position.seconds} onCancel={position.cancel} />
-          )}
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setHeldPhoto(null);
-              setError(null);
-            }}
+          <button
+            type="button"
+            onClick={() => setPhoto(null)}
             disabled={busy}
-            className="mt-2 w-full"
+            className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-muted text-sm font-medium"
           >
-            Take a different photo
-          </Button>
-        </>
+            <RotateCcw size={15} aria-hidden />
+            Retake Photo
+          </button>
+        </div>
       ) : (
-        <>
-          <CameraCapture onCapture={submit} disabled={busy} />
-          {position.searching ? (
-            <PositionSearchNotice seconds={position.seconds} onCancel={position.cancel} />
-          ) : (
-            busy && <p className="mt-3 text-sm text-muted">{phaseLabel(phase, sendingFor)}</p>
-          )}
-        </>
+        <CameraCapture onCapture={setPhoto} disabled={busy} />
       )}
 
+      <GpsStatus lock={position} />
+
       {error && (
-        <p role="alert" className="mt-3 text-sm text-danger">
+        <p role="alert" className="mt-4 text-sm text-danger">
           {error}
         </p>
       )}
+
+      {checkIn.data?.queued && <QueuedNotice what="check-in" />}
+
+      <PrimaryAction onClick={submit} disabled={!photo || !position.ready || busy}>
+        {busy ? sending.label("Checking in") : "Check in"}
+      </PrimaryAction>
     </section>
   );
 }
 
-function CheckOutStep({ visitId }: { visitId: string }) {
+/**
+ * Departure: the arrival photo shown back, the position taken again, and the
+ * time the server recorded on arrival.
+ */
+function CheckOutStep({ visitId, attendance }: { visitId: string; attendance: VisitAttendance }) {
   const checkOut = useCheckOut();
+  const position = usePositionLock();
   const [error, setError] = useState<string | null>(null);
-  const [phase, setPhase] = useState<Phase>("idle");
-  const position = usePositionSearch();
-  const [sendingSince, setSendingSince] = useState(0);
-  const busy = phase !== "idle";
-  const sendingFor = secondsSince(sendingSince, useTicker(phase === "saving"));
+  const [busy, setBusy] = useState(false);
+  const sending = useSending();
 
-  async function onCheckOut() {
+  async function submit() {
+    if (!position.fix) return;
+
     setError(null);
-    setPhase("locating");
+    setBusy(true);
+    sending.start();
     try {
-      const { lat, lng } = await position.locate();
-      setSendingSince(Date.now());
-      setPhase("saving");
-      await checkOut.mutateAsync({ visitId, lat, lng });
+      await checkOut.mutateAsync({
+        visitId,
+        lat: position.fix.lat,
+        lng: position.fix.lng,
+        accuracyM: position.fix.accuracyM,
+      });
     } catch (cause) {
-      setError(messageUnlessCancelled(cause));
+      setError(message(cause));
     } finally {
-      setPhase("idle");
+      setBusy(false);
+      sending.stop();
     }
   }
 
-  if (checkOut.data?.queued) return <QueuedNotice />;
-
   return (
-    <section className="rounded-xl border border-border bg-surface p-4">
-      <h2 className="text-sm font-medium">Check out</h2>
-      <p className="mt-1 mb-3 text-sm text-muted">Do this as you leave the location.</p>
-      <Button onClick={onCheckOut} disabled={busy} className="w-full">
-        {phase === "idle" ? "Check out" : phaseLabel(phase, sendingFor)}
-      </Button>
-      {position.searching && (
-        <PositionSearchNotice seconds={position.seconds} onCancel={position.cancel} />
+    <section>
+      {attendance.checkInPhotoUrl && (
+        <figure className="overflow-hidden rounded-2xl border border-border">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={attendance.checkInPhotoUrl}
+            alt="The photo taken when you arrived"
+            className="w-full"
+          />
+          <figcaption className="bg-sunken px-4 py-3">
+            <p className="text-sm font-medium">Image Uploaded</p>
+            <p className="text-sm text-muted">Taken when you checked in</p>
+          </figcaption>
+        </figure>
       )}
+
+      <GpsStatus lock={position} />
+
+      {attendance.checkInAt && (
+        <div className="mt-4 rounded-xl border border-border p-4">
+          <p className="text-sm font-medium">Check in Time:</p>
+          <p className="text-sm text-muted tabular-nums">{time(attendance.checkInAt)}</p>
+        </div>
+      )}
+
       {error && (
-        <p role="alert" className="mt-3 text-sm text-danger">
+        <p role="alert" className="mt-4 text-sm text-danger">
           {error}
         </p>
       )}
+
+      {checkOut.data?.queued && <QueuedNotice what="check-out" />}
+
+      <PrimaryAction onClick={submit} disabled={!position.ready || busy}>
+        {busy ? sending.label("Checking out") : "Check Out"}
+      </PrimaryAction>
     </section>
   );
 }
 
-function ReportStep({ visitId }: { visitId: string }) {
+function ReportStep({
+  visitId,
+  onSubmitted,
+}: {
+  visitId: string;
+  onSubmitted: (result: { queued: boolean }) => void;
+}) {
   const submitReport = useSubmitReport();
+  const [outcome, setOutcome] = useState<VisitOutcome | null>(null);
   const [notes, setNotes] = useState("");
-  const [outcome, setOutcome] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -203,7 +397,12 @@ function ReportStep({ visitId }: { visitId: string }) {
     setError(null);
     setBusy(true);
     try {
-      await submitReport.mutateAsync({ visitId, notes, outcome: outcome || undefined });
+      const result = await submitReport.mutateAsync({
+        visitId,
+        notes,
+        outcome: outcome ?? undefined,
+      });
+      onSubmitted({ queued: result.queued });
     } catch (cause) {
       setError(message(cause));
     } finally {
@@ -211,47 +410,70 @@ function ReportStep({ visitId }: { visitId: string }) {
     }
   }
 
-  if (submitReport.data?.queued) return <QueuedNotice />;
-
   return (
-    <form onSubmit={onSubmit} className="rounded-xl border border-border bg-surface p-4">
-      <h2 className="text-sm font-medium">Your report</h2>
-      <p className="mt-1 text-sm text-muted">
-        Your own account of the visit. Your partner writes theirs separately.
-      </p>
+    <form onSubmit={onSubmit}>
+      <fieldset>
+        <legend className="font-medium">Outcome</legend>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {OUTCOMES.map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setOutcome((chosen) => (chosen === value ? null : value))}
+              aria-pressed={outcome === value}
+              className={`${CHIP} rounded-full px-4 py-2 ${
+                outcome === value
+                  ? "border-sidebar-active-bg bg-sidebar-active-bg text-sidebar-active-foreground"
+                  : CHIP_OFF
+              }`}
+            >
+              {OUTCOME_LABEL[value]}
+            </button>
+          ))}
+        </div>
+      </fieldset>
 
-      <label className="mt-3 block text-sm font-medium" htmlFor="notes">
-        What happened?
+      <label className="mt-7 block font-medium" htmlFor="notes">
+        Notes
       </label>
       <textarea
         id="notes"
         required
-        rows={5}
+        rows={4}
         maxLength={5000}
         value={notes}
         onChange={(event) => setNotes(event.target.value)}
-        className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-base outline-none focus:border-brand"
-      />
-
-      <TextField
-        id="outcome"
-        label="Outcome (optional)"
-        placeholder="interested / no decision-maker present"
-        maxLength={200}
-        value={outcome}
-        onChange={(event) => setOutcome(event.target.value)}
-        className="mt-4"
+        placeholder="What did they say? What's next?"
+        className="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 text-base outline-none placeholder:text-sidebar-section-label focus:border-chip-active-edge"
       />
 
       {error && (
-        <p role="alert" className="mt-3 text-sm text-danger">
+        <p role="alert" className="mt-4 text-sm text-danger">
           {error}
         </p>
       )}
 
-      <Button type="submit" disabled={busy} className="mt-4 w-full">
-        {busy ? "Submitting…" : "Submit report"}
-      </Button>
+      {submitReport.data?.queued && <QueuedNotice what="report" />}
+
+      <PrimaryAction type="submit" disabled={busy || !notes.trim()}>
+        {busy ? "Submitting…" : "Submit Report"}
+      </PrimaryAction>
     </form>
+  );
+}
+
+function AlreadyReported({ report, repId }: { report: SubmittedReport; repId: string }) {
+  const mine = report.attendance?.rep?.id === repId;
+
+  return (
+    <section className="rounded-2xl border border-border bg-surface p-4">
+      <h2 className="font-medium">Visit written up</h2>
+      <p className="mt-1 text-sm text-muted">
+        {mine
+          ? "You wrote this visit up."
+          : `${report.attendance?.rep?.firstName ?? "Your partner"} wrote this visit up.`}
+      </p>
+      {report.notes && <p className="mt-3 text-sm">{report.notes}</p>}
+    </section>
   );
 }

@@ -1,5 +1,5 @@
 export interface PairMember {
-  user: { id: string; firstName: string; lastName: string };
+  user: { id: string; firstName: string; lastName: string; profileImageUrl?: string | null };
 }
 
 export interface HasPair {

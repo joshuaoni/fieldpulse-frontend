@@ -7,6 +7,8 @@
  * app kill, a reboot, and a week in a drawer.
  */
 
+import type { VisitOutcome } from "./outcomes";
+
 const DB_NAME = "fieldpulse";
 const DB_VERSION = 1;
 const STORE = "outbox";
@@ -17,6 +19,7 @@ export type QueuedAction =
       visitId: string;
       lat: number;
       lng: number;
+      accuracyM?: number | null;
       photo: Blob;
       clientLocalAt: string;
     }
@@ -25,13 +28,14 @@ export type QueuedAction =
       visitId: string;
       lat: number;
       lng: number;
+      accuracyM?: number | null;
       clientLocalAt: string;
     }
   | {
       kind: "report";
       visitId: string;
       notes: string;
-      outcome?: string;
+      outcome?: VisitOutcome;
       clientLocalAt: string;
     };
 

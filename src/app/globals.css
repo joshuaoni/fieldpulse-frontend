@@ -1,40 +1,80 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f8f7;
+  color-scheme: light;
+
+  /* Neutrals follow the shared Meta4 dashboard (inventory-dashboard's
+     bg.page / fg.* scale): a cool blue-grey family, not a green-tinted one.
+     --brand stays green and carries the FieldPulse identity through actions,
+     links and status instead of through the greys. */
+  --background: #f4f7f9;
   --surface: #ffffff;
-  --foreground: #14201b;
-  --muted: #5d6b64;
-  --border: #dde3df;
+  --sunken: #e8eef2;
+  --foreground: #122e3d;
+  --muted: #607d8e;
+  --border: #e8eef2;
   --brand: #10543e;
   --brand-ink: #f0fdf7;
   --danger: #9f1239;
+
+  /* The manager shell's sidebar/topbar deliberately use a neutral
+     black-and-white palette (matching the shared Meta4 dashboard look)
+     rather than --brand, which stays reserved for actions and links. */
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #d1d5dc;
+  --sidebar-foreground: #111723;
+  --sidebar-section-label: #8c9bb0;
+  --sidebar-active-bg: #111723;
+  --sidebar-active-foreground: #ffffff;
+  --sidebar-hover-bg: #f3f4f6;
+  --sidebar-disabled: #b0b8c1;
+
+  --success-bg: #ecfaf2;
+  --success-fg: #0c784a;
+
+  --chip-bg: #f3f5f8;
+  --chip-edge: #d2d9e4;
+  --chip-active-bg: #edf4ff;
+  --chip-active-edge: #347ff4;
+
+  --border-strong: #d1d5dc;
+
+  --control-edge: #8c9bb0;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
   --color-danger: var(--danger);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-section-label: var(--sidebar-section-label);
+  --color-sidebar-active-bg: var(--sidebar-active-bg);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+  --color-sidebar-hover-bg: var(--sidebar-hover-bg);
+  --color-sidebar-disabled: var(--sidebar-disabled);
+  --color-control-edge: var(--control-edge);
+  --color-success-bg: var(--success-bg);
+  --color-success-fg: var(--success-fg);
+  --color-chip-bg: var(--chip-bg);
+  --color-chip-edge: var(--chip-edge);
+  --color-chip-active-bg: var(--chip-active-bg);
+  --color-chip-active-edge: var(--chip-active-edge);
+  --color-border-strong: var(--border-strong);
+  --font-sans: var(--font-dm-sans);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0c1210;
-    --surface: #141c18;
-    --foreground: #e8efea;
-    --muted: #9aa8a0;
-    --border: #263029;
-    --brand: #2f9d76;
-    --brand-ink: #06120d;
-    --danger: #fb7185;
-  }
+
+.manager-surface {
+  background: var(--background);
+  color: var(--foreground);
 }
 
 body {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { VisitOutcome } from "@/lib/outcomes";
 import { useEffect, useState } from "react";
 import { ApiError, isNetworkError } from "@/lib/errors";
 import {
@@ -73,6 +74,7 @@ async function sendQueued(action: QueuedAction): Promise<"done" | "retry"> {
         visitId: action.visitId,
         lat: action.lat,
         lng: action.lng,
+        accuracyM: action.accuracyM,
         photo: action.photo,
         clientLocalCheckInAt: action.clientLocalAt,
       });
@@ -81,6 +83,7 @@ async function sendQueued(action: QueuedAction): Promise<"done" | "retry"> {
         visitId: action.visitId,
         lat: action.lat,
         lng: action.lng,
+        accuracyM: action.accuracyM,
         clientLocalCheckOutAt: action.clientLocalAt,
       });
     } else {
@@ -142,6 +145,7 @@ export function useQueueFlush() {
 }
 
 interface CheckInVariables {
+  accuracyM?: number | null;
   visitId: string;
   lat: number;
   lng: number;
@@ -156,11 +160,11 @@ export function useCheckIn() {
   const queryClient = useQueryClient();
 
   return useMutation<{ queued: boolean; visit?: Visit }, Error, CheckInVariables>({
-    mutationFn: async ({ visitId, lat, lng, photo }) => {
+    mutationFn: async ({ visitId, lat, lng, accuracyM, photo }) => {
       const clientLocalAt = new Date().toISOString();
 
       if (definitelyOffline()) {
-        await enqueue({ kind: "check-in", visitId, lat, lng, photo, clientLocalAt });
+        await enqueue({ kind: "check-in", visitId, lat, lng, accuracyM, photo, clientLocalAt });
         return { queued: true };
       }
 
@@ -169,13 +173,14 @@ export function useCheckIn() {
           visitId,
           lat,
           lng,
+          accuracyM,
           photo,
           clientLocalCheckInAt: clientLocalAt,
         });
         return { queued: false, visit };
       } catch (error) {
         if (!shouldQueue(error)) throw error;
-        await enqueue({ kind: "check-in", visitId, lat, lng, photo, clientLocalAt });
+        await enqueue({ kind: "check-in", visitId, lat, lng, accuracyM, photo, clientLocalAt });
         return { queued: true };
       }
     },
@@ -186,6 +191,7 @@ export function useCheckIn() {
 }
 
 interface CheckOutVariables {
+  accuracyM?: number | null;
   visitId: string;
   lat: number;
   lng: number;
@@ -195,11 +201,11 @@ export function useCheckOut() {
   const queryClient = useQueryClient();
 
   return useMutation<{ queued: boolean; visit?: Visit }, Error, CheckOutVariables>({
-    mutationFn: async ({ visitId, lat, lng }) => {
+    mutationFn: async ({ visitId, lat, lng, accuracyM }) => {
       const clientLocalAt = new Date().toISOString();
 
       if (definitelyOffline()) {
-        await enqueue({ kind: "check-out", visitId, lat, lng, clientLocalAt });
+        await enqueue({ kind: "check-out", visitId, lat, lng, accuracyM, clientLocalAt });
         return { queued: true };
       }
 
@@ -208,12 +214,13 @@ export function useCheckOut() {
           visitId,
           lat,
           lng,
+          accuracyM,
           clientLocalCheckOutAt: clientLocalAt,
         });
         return { queued: false, visit };
       } catch (error) {
         if (!shouldQueue(error)) throw error;
-        await enqueue({ kind: "check-out", visitId, lat, lng, clientLocalAt });
+        await enqueue({ kind: "check-out", visitId, lat, lng, accuracyM, clientLocalAt });
         return { queued: true };
       }
     },
@@ -226,7 +233,7 @@ export function useCheckOut() {
 interface ReportVariables {
   visitId: string;
   notes: string;
-  outcome?: string;
+  outcome?: VisitOutcome;
 }
 
 export function useSubmitReport() {

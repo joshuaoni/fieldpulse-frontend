@@ -5,6 +5,7 @@
 export interface Fix {
   lat: number;
   lng: number;
+  accuracyM: number | null;
 }
 
 export interface PositionRequest {
@@ -54,6 +55,9 @@ export const isCancelled = (error: unknown): boolean => error instanceof Positio
 const toFix = (position: GeolocationPosition): Fix => ({
   lat: position.coords.latitude,
   lng: position.coords.longitude,
+  accuracyM: Number.isFinite(position.coords.accuracy)
+    ? Math.round(position.coords.accuracy)
+    : null,
 });
 
 /**
