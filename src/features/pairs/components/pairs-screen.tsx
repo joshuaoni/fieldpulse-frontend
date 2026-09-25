@@ -106,7 +106,7 @@ export function PairsScreen() {
       {isPending && <p className="mt-6 text-sm text-muted">Loading…</p>}
 
       {pairs && shown.length === 0 && (
-        <p className="mt-6 rounded-xl border border-dashed border-border p-6 text-sm text-muted">
+        <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
           {pairs.length ? `No pair has a rep matching "${term}".` : "No pairs yet."}
         </p>
       )}

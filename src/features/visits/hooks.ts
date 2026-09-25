@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import type { VisitOutcome } from "@/lib/outcomes";
 import { useEffect, useState } from "react";
 import { ApiError, isNetworkError } from "@/lib/errors";
@@ -8,11 +8,18 @@ import {
   count as queueCount,
   enqueue,
   flush,
+  listQueued,
   subscribe as subscribeToQueue,
   type QueuedAction,
 } from "@/lib/offline-queue";
 import * as visitsApi from "./api";
-import type { Visit, VisitFilters, VisitListResponse } from "./types";
+import type {
+  Visit,
+  VisitAttendance,
+  VisitFilters,
+  VisitListResponse,
+  VisitStatus,
+} from "./types";
 
 export const visitKeys = {
   all: ["visits"] as const,
@@ -102,6 +109,84 @@ async function sendQueued(action: QueuedAction): Promise<"done" | "retry"> {
   }
 }
 
+function withLocalChange(visit: Visit, repId: string, change: Partial<VisitAttendance>): Visit {
+  const held = visit.attendances.some((attendance) => attendance.repId === repId);
+
+  const attendances = held
+    ? visit.attendances.map((attendance) =>
+        attendance.repId === repId ? { ...attendance, ...change } : attendance,
+      )
+    : [...visit.attendances, { ...blankAttendance(visit.id, repId), ...change }];
+
+  return { ...visit, attendances, status: rollUp(attendances, visit.status) };
+}
+
+const blankAttendance = (visitId: string, repId: string): VisitAttendance => ({
+  id: `local:${visitId}:${repId}`,
+  repId,
+  checkInLat: null,
+  checkInLng: null,
+  checkInPhotoUrl: null,
+  checkInAt: null,
+  checkOutLat: null,
+  checkOutLng: null,
+  checkOutAt: null,
+  clientLocalCheckInAt: null,
+  clientLocalCheckOutAt: null,
+});
+
+function rollUp(attendances: VisitAttendance[], current: VisitStatus): VisitStatus {
+  const arrived = attendances.filter((attendance) => attendance.checkInAt);
+  if (arrived.length === 0) return current;
+
+  return arrived.every((attendance) => attendance.checkOutAt) ? "COMPLETED" : "CHECKED_IN";
+}
+
+function patchCaches(client: QueryClient, visitId: string, apply: (visit: Visit) => Visit): void {
+  client.setQueryData<Visit>(visitKeys.detail(visitId), (held) => (held ? apply(held) : held));
+
+  client.setQueriesData<VisitListResponse>({ queryKey: visitKeys.all }, (held) => {
+    if (!held?.visits?.some((visit) => visit.id === visitId)) return held;
+
+    return {
+      ...held,
+      visits: held.visits.map((visit) => (visit.id === visitId ? apply(visit) : visit)),
+    };
+  });
+}
+
+export function useQueuedFor(visitId: string): Set<QueuedAction["kind"]> {
+  const [kinds, setKinds] = useState<Set<QueuedAction["kind"]>>(() => new Set());
+
+  useEffect(() => {
+    let active = true;
+
+    const refresh = () => {
+      void listQueued()
+        .then((items) => {
+          if (!active) return;
+          setKinds(
+            new Set(
+              items
+                .filter((item) => item.action.visitId === visitId)
+                .map((item) => item.action.kind),
+            ),
+          );
+        })
+        .catch(() => {});
+    };
+
+    refresh();
+    const unsubscribe = subscribeToQueue(refresh);
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [visitId]);
+
+  return kinds;
+}
+
 /**
  * Queue depth, as a live value. Reps are told how many actions are waiting.
  */
@@ -147,6 +232,7 @@ export function useQueueFlush() {
 interface CheckInVariables {
   accuracyM?: number | null;
   visitId: string;
+  repId: string;
   lat: number;
   lng: number;
   photo: Blob;
@@ -160,13 +246,23 @@ export function useCheckIn() {
   const queryClient = useQueryClient();
 
   return useMutation<{ queued: boolean; visit?: Visit }, Error, CheckInVariables>({
-    mutationFn: async ({ visitId, lat, lng, accuracyM, photo }) => {
+    mutationFn: async ({ visitId, repId, lat, lng, accuracyM, photo }) => {
       const clientLocalAt = new Date().toISOString();
 
-      if (definitelyOffline()) {
+      const queue = async () => {
         await enqueue({ kind: "check-in", visitId, lat, lng, accuracyM, photo, clientLocalAt });
+        patchCaches(queryClient, visitId, (visit) =>
+          withLocalChange(visit, repId, {
+            checkInAt: clientLocalAt,
+            clientLocalCheckInAt: clientLocalAt,
+            checkInLat: lat,
+            checkInLng: lng,
+          }),
+        );
         return { queued: true };
-      }
+      };
+
+      if (definitelyOffline()) return queue();
 
       try {
         const visit = await visitsApi.checkIn({
@@ -180,12 +276,14 @@ export function useCheckIn() {
         return { queued: false, visit };
       } catch (error) {
         if (!shouldQueue(error)) throw error;
-        await enqueue({ kind: "check-in", visitId, lat, lng, accuracyM, photo, clientLocalAt });
-        return { queued: true };
+        return queue();
       }
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: visitKeys.all });
+    // Nothing queued has reached the server, and a refetch that failed — or
+    // worse, succeeded before the queue drained — would undo what was just
+    // written above.
+    onSuccess: (result) => {
+      if (!result.queued) void queryClient.invalidateQueries({ queryKey: visitKeys.all });
     },
   });
 }
@@ -193,6 +291,7 @@ export function useCheckIn() {
 interface CheckOutVariables {
   accuracyM?: number | null;
   visitId: string;
+  repId: string;
   lat: number;
   lng: number;
 }
@@ -201,13 +300,23 @@ export function useCheckOut() {
   const queryClient = useQueryClient();
 
   return useMutation<{ queued: boolean; visit?: Visit }, Error, CheckOutVariables>({
-    mutationFn: async ({ visitId, lat, lng, accuracyM }) => {
+    mutationFn: async ({ visitId, repId, lat, lng, accuracyM }) => {
       const clientLocalAt = new Date().toISOString();
 
-      if (definitelyOffline()) {
+      const queue = async () => {
         await enqueue({ kind: "check-out", visitId, lat, lng, accuracyM, clientLocalAt });
+        patchCaches(queryClient, visitId, (visit) =>
+          withLocalChange(visit, repId, {
+            checkOutAt: clientLocalAt,
+            clientLocalCheckOutAt: clientLocalAt,
+            checkOutLat: lat,
+            checkOutLng: lng,
+          }),
+        );
         return { queued: true };
-      }
+      };
+
+      if (definitelyOffline()) return queue();
 
       try {
         const visit = await visitsApi.checkOut({
@@ -220,12 +329,11 @@ export function useCheckOut() {
         return { queued: false, visit };
       } catch (error) {
         if (!shouldQueue(error)) throw error;
-        await enqueue({ kind: "check-out", visitId, lat, lng, accuracyM, clientLocalAt });
-        return { queued: true };
+        return queue();
       }
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: visitKeys.all });
+    onSuccess: (result) => {
+      if (!result.queued) void queryClient.invalidateQueries({ queryKey: visitKeys.all });
     },
   });
 }
@@ -267,8 +375,8 @@ export function useSubmitReport() {
         return { queued: true };
       }
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: visitKeys.all });
+    onSuccess: (result) => {
+      if (!result.queued) void queryClient.invalidateQueries({ queryKey: visitKeys.all });
     },
   });
 }

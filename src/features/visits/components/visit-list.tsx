@@ -31,7 +31,7 @@ export function VisitList({
 }) {
   if (visits.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-border p-6 text-sm text-muted">
+      <p className="rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
         {emptyMessage}
       </p>
     );

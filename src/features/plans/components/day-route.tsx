@@ -59,7 +59,7 @@ export function DayRoute({
 
   if (stops.length === 0) {
     return (
-      <section className="mt-4 rounded-xl border border-dashed border-border p-8 text-center">
+      <section className="mt-4 rounded-xl border border-dashed border-border-strong p-8 text-center">
         <p className="text-sm text-muted">Nothing planned for {DAY_NAMES[dayIndex]}.</p>
       </section>
     );

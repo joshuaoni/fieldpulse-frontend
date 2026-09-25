@@ -7,7 +7,7 @@ import { OUTCOMES, OUTCOME_LABEL, type VisitOutcome } from "@/lib/outcomes";
 import { getCurrentPosition, isCancelled, type Fix } from "@/lib/geolocation";
 import { secondsSince, useTicker } from "@/lib/use-elapsed";
 import { messageUnlessCancelled } from "./position-search";
-import { useCheckIn, useCheckOut, useSubmitReport } from "../hooks";
+import { useCheckIn, useCheckOut, useQueuedFor, useSubmitReport } from "../hooks";
 import { myAttendance, type SubmittedReport, type Visit, type VisitAttendance } from "../types";
 import { CameraCapture } from "./camera-capture";
 
@@ -29,10 +29,33 @@ export function VisitActions({
   onSubmitted: (result: { queued: boolean }) => void;
 }) {
   const mine = myAttendance(visit, repId);
+  const queued = useQueuedFor(visit.id);
 
-  if (!mine?.checkInAt) return <CheckInStep visitId={visit.id} />;
-  if (!mine.checkOutAt) return <CheckOutStep visitId={visit.id} attendance={mine} />;
+  /**
+   * Anything sitting in the queue has happened as far as the rep is concerned
+   * — the server has simply not heard about it yet. Reading it here is what
+   * stops the screen offering a step that is already recorded: without it a
+   * check-in taken offline left the button live, and one arrival became
+   * twelve queued check-ins.
+   */
+  const checkedIn = Boolean(mine?.checkInAt) || queued.has("check-in");
+  const checkedOut = Boolean(mine?.checkOutAt) || queued.has("check-out");
+
+  if (!checkedIn) return <CheckInStep visitId={visit.id} repId={repId} />;
+
+  if (!checkedOut) {
+    return (
+      <CheckOutStep
+        visitId={visit.id}
+        repId={repId}
+        attendance={mine}
+        arrivalQueued={queued.has("check-in")}
+      />
+    );
+  }
+
   if (visit.report) return <AlreadyReported report={visit.report} repId={repId} />;
+  if (queued.has("report")) return <ReportQueued />;
 
   return <ReportStep visitId={visit.id} onSubmitted={onSubmitted} />;
 }
@@ -227,7 +250,7 @@ function PrimaryAction({
  * server, so any clock shown here would be the phone's own and might not be
  * what ends up on the record.
  */
-function CheckInStep({ visitId }: { visitId: string }) {
+function CheckInStep({ visitId, repId }: { visitId: string; repId: string }) {
   const checkIn = useCheckIn();
   const position = usePositionLock();
   const [photo, setPhoto] = useState<Blob | null>(null);
@@ -254,6 +277,7 @@ function CheckInStep({ visitId }: { visitId: string }) {
     try {
       await checkIn.mutateAsync({
         visitId,
+        repId,
         lat: position.fix.lat,
         lng: position.fix.lng,
         accuracyM: position.fix.accuracyM,
@@ -310,7 +334,17 @@ function CheckInStep({ visitId }: { visitId: string }) {
  * Departure: the arrival photo shown back, the position taken again, and the
  * time the server recorded on arrival.
  */
-function CheckOutStep({ visitId, attendance }: { visitId: string; attendance: VisitAttendance }) {
+function CheckOutStep({
+  visitId,
+  repId,
+  attendance,
+  arrivalQueued,
+}: {
+  visitId: string;
+  repId: string;
+  attendance: VisitAttendance | undefined;
+  arrivalQueued: boolean;
+}) {
   const checkOut = useCheckOut();
   const position = usePositionLock();
   const [error, setError] = useState<string | null>(null);
@@ -326,6 +360,7 @@ function CheckOutStep({ visitId, attendance }: { visitId: string; attendance: Vi
     try {
       await checkOut.mutateAsync({
         visitId,
+        repId,
         lat: position.fix.lat,
         lng: position.fix.lng,
         accuracyM: position.fix.accuracyM,
@@ -340,7 +375,11 @@ function CheckOutStep({ visitId, attendance }: { visitId: string; attendance: Vi
 
   return (
     <section>
-      {attendance.checkInPhotoUrl && (
+      {/* No photo and no arrival time to show back: both are on this phone,
+          waiting to go up. Saying so beats an empty panel. */}
+      {arrivalQueued && <QueuedNotice what="check-in" />}
+
+      {attendance?.checkInPhotoUrl && (
         <figure className="overflow-hidden rounded-2xl border border-border">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -357,7 +396,7 @@ function CheckOutStep({ visitId, attendance }: { visitId: string; attendance: Vi
 
       <GpsStatus lock={position} />
 
-      {attendance.checkInAt && (
+      {attendance?.checkInAt && (
         <div className="mt-4 rounded-xl border border-border p-4">
           <p className="text-sm font-medium">Check in Time:</p>
           <p className="text-sm text-muted tabular-nums">{time(attendance.checkInAt)}</p>
@@ -459,6 +498,25 @@ function ReportStep({
         {busy ? "Submitting…" : "Submit Report"}
       </PrimaryAction>
     </form>
+  );
+}
+
+/**
+ * Written up, but only here so far.
+ *
+ * There is no report to show back — it has no id and no accepted time until
+ * the server takes it — so this says where it stands instead of offering the
+ * form a second time.
+ */
+function ReportQueued() {
+  return (
+    <section className="rounded-2xl border border-border bg-surface p-4">
+      <h2 className="font-medium">Visit written up</h2>
+      <p className="mt-1 text-sm text-muted">
+        Your report is saved on this phone and will sync when you have a connection. There is
+        nothing left to do here.
+      </p>
+    </section>
   );
 }
 

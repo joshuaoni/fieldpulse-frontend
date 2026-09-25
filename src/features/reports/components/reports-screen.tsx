@@ -168,7 +168,7 @@ export function ReportsScreen() {
         )}
 
         {reports.data?.reports.length === 0 && (
-          <p className="mt-6 rounded-xl border border-dashed border-border p-6 text-sm text-muted">
+          <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
             No reports match what you are looking for.
           </p>
         )}

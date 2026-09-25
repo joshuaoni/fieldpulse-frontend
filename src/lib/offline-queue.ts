@@ -143,12 +143,18 @@ function notify() {
 }
 
 export async function enqueue(action: QueuedAction): Promise<void> {
+  const held = (await listQueued()).find(
+    (item) => item.action.kind === action.kind && item.action.visitId === action.visitId,
+  );
+
   await withStore("readwrite", async (store) => {
     await promisify(
-      store.add({ action, queuedAt: new Date().toISOString(), attempts: 0 } as Omit<
-        QueuedItem,
-        "id"
-      >),
+      held
+        ? store.put({ ...held, action, attempts: 0, lastError: undefined })
+        : store.add({ action, queuedAt: new Date().toISOString(), attempts: 0 } as Omit<
+            QueuedItem,
+            "id"
+          >),
     );
   });
   notify();
