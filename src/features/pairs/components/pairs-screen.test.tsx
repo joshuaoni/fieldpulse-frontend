@@ -76,7 +76,7 @@ describe("the day the roster describes", () => {
     show();
     await waitFor(() => expect(fetchPairs).toHaveBeenCalled());
 
-    fireEvent.click(screen.getByLabelText("Previous day"));
+    fireEvent.click(screen.getByText("Previous"));
 
     const yesterday = new Date();
     yesterday.setUTCDate(yesterday.getUTCDate() - 1);
@@ -91,7 +91,7 @@ describe("the day the roster describes", () => {
     await waitFor(() => expect(fetchPairs).toHaveBeenCalled());
     expect(screen.queryByText("Today")).toBeNull();
 
-    fireEvent.click(screen.getByLabelText("Next day"));
+    fireEvent.click(screen.getByText("Next"));
     fireEvent.click(await screen.findByText("Today"));
 
     await waitFor(() => expect(screen.queryByText("Today")).toBeNull());
@@ -155,5 +155,34 @@ describe("what a row says when the day is quiet", () => {
     ]);
 
     expect(await screen.findByText("Not planned")).toBeDefined();
+  });
+});
+
+/**
+ * A day's progress is amber while something is still owed and green once it
+ * is all behind them — the colour is the quickest read on the row.
+ */
+describe("how a day's progress reads", () => {
+  const withProgress = (done: number, total: number) =>
+    pair({
+      date: "2026-09-23T00:00:00.000Z",
+      current: null,
+      progress: { done, total },
+      week: { done, total },
+    });
+
+  it("is amber while the day is unfinished", async () => {
+    show([withProgress(3, 5)]);
+
+    const badge = await screen.findByText("3 of 5");
+    expect(badge.className).toContain("amber");
+  });
+
+  it("turns green once every call is done", async () => {
+    show([withProgress(5, 5)]);
+
+    const badge = await screen.findByText("5 of 5");
+    expect(badge.className).toContain("success");
+    expect(badge.className).not.toContain("amber");
   });
 });

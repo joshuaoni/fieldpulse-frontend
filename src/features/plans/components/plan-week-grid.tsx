@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Plus, RotateCw } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, RotateCw } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { MemberAvatars } from "@/components/ui/member-avatars";
@@ -88,10 +88,12 @@ export function PlanWeekGrid() {
 
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" onClick={() => setWeekStart(shiftWeeks(weekStart, -1))}>
+            <ChevronLeft size={18} aria-hidden />
             Previous
           </Button>
           <Button variant="outline" onClick={() => setWeekStart(shiftWeeks(weekStart, 1))}>
             Next
+            <ChevronRight size={18} aria-hidden />
           </Button>
           <Button
             variant="outline"

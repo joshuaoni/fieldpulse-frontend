@@ -2,20 +2,15 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Bell, ChevronRight, Route } from "lucide-react";
-import { MemberAvatars } from "@/components/ui/member-avatars";
+import { Bell, ChevronLeft, Route } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { RemindersPanel } from "@/features/reminders/components/reminders-panel";
 import { useReminderSchedule } from "@/features/reminders/hooks";
 import { overdueReminders } from "@/features/reminders/types";
 import { useSession } from "@/lib/session";
 import { useMyVisits, useQueueFlush } from "../hooks";
-import type { Visit } from "../types";
 import {
   DAY_NAMES,
-  STATUS_LABEL,
-  STATUS_TONE,
-  driveLabel,
   partnersOf,
   plannedDays,
   visitsByDay,
@@ -23,6 +18,7 @@ import {
   weekWindow,
 } from "../week";
 import { PendingActionsBanner } from "./pending-actions-banner";
+import { RouteCard } from "./route-card";
 
 function todayIndex(weekStart: Date): number | null {
   const today = new Date();
@@ -57,6 +53,14 @@ export function MyWeekScreen() {
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-5 py-6">
       <header className="flex items-center justify-between gap-3">
+        <Link
+          href="/today"
+          aria-label="Back to today"
+          className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-surface"
+        >
+          <ChevronLeft size={18} aria-hidden />
+        </Link>
+
         <div className="min-w-0 flex-1 text-center">
           <h1 className="text-lg font-semibold tracking-tight">This Week</h1>
           <p className="text-sm text-muted">
@@ -132,7 +136,7 @@ export function MyWeekScreen() {
         </p>
       </section>
 
-      <h2 className="mt-7 text-sm font-medium text-muted">My Routes</h2>
+      <h2 className="mt-7 text-sm font-medium text-muted">My Visits</h2>
 
       {isPending && <p className="mt-3 text-sm text-muted">Loading…</p>}
 
@@ -167,50 +171,3 @@ export function MyWeekScreen() {
   );
 }
 
-function RouteCard({
-  visit,
-  position,
-  selfId,
-}: {
-  visit: Visit;
-  position: number;
-  selfId: string | undefined;
-}) {
-  const drive = driveLabel(visit, position);
-  const partners = (visit.pair?.members ?? []).filter((member) => member.user.id !== selfId);
-
-  return (
-    <li>
-      <Link
-        href={`/visits/${visit.id}`}
-        className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-4 hover:bg-sunken"
-      >
-        <span className="min-w-0 flex-1">
-          <span className="flex items-start justify-between gap-3">
-            <span className="min-w-0 truncate font-semibold">{visit.lead.companyName}</span>
-            <span
-              className={`shrink-0 rounded-md px-2 py-1 text-xs/none font-medium ${STATUS_TONE[visit.status]}`}
-            >
-              {STATUS_LABEL[visit.status]}
-            </span>
-          </span>
-
-          <span className="mt-1 flex flex-wrap items-center gap-x-1.5 text-sm text-muted">
-            {visit.lead.address && <span className="truncate">{visit.lead.address}</span>}
-            {visit.lead.address && drive && <span aria-hidden>•</span>}
-            {drive && <span className="shrink-0">{drive}</span>}
-          </span>
-
-          <span className="mt-2 flex items-center gap-2">
-            <MemberAvatars users={(visit.pair?.members ?? []).map((member) => member.user)} />
-            <span className="truncate text-sm text-muted">
-              You{partners.length ? ` & ${partners.map((m) => m.user.firstName).join(" & ")}` : ""}
-            </span>
-          </span>
-        </span>
-
-        <ChevronRight size={18} aria-hidden className="shrink-0 text-muted" />
-      </Link>
-    </li>
-  );
-}

@@ -79,22 +79,20 @@ export function PairsScreen() {
           />
         </label>
 
-        <div className="flex items-center gap-1.5">
-          <DayStep label="Previous day" onClick={() => setDay(shiftDays(day, -1))}>
-            <ChevronLeft size={16} aria-hidden />
-          </DayStep>
-          <DayStep label="Next day" onClick={() => setDay(shiftDays(day, 1))}>
-            <ChevronRight size={16} aria-hidden />
-          </DayStep>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={() => setDay(shiftDays(day, -1))}>
+            <ChevronLeft size={18} aria-hidden />
+            Previous
+          </Button>
+          <Button variant="outline" onClick={() => setDay(shiftDays(day, 1))}>
+            Next
+            <ChevronRight size={18} aria-hidden />
+          </Button>
 
           {!isToday && (
-            <button
-              type="button"
-              onClick={() => setDay(today)}
-              className="ml-1 h-9 rounded-lg px-2 text-sm font-medium text-brand hover:underline"
-            >
+            <Button variant="outline" onClick={() => setDay(today)}>
               Today
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -150,26 +148,6 @@ export function PairsScreen() {
   );
 }
 
-function DayStep({
-  label,
-  onClick,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className="flex size-9 items-center justify-center rounded-lg border border-control-edge bg-surface text-muted hover:bg-sidebar-hover-bg hover:text-foreground"
-    >
-      {children}
-    </button>
-  );
-}
 
 function PairRow({ pair, onEdit }: { pair: SalesPair; onEdit: () => void }) {
   const { current, progress, week } = pair.day;
@@ -195,7 +173,13 @@ function PairRow({ pair, onEdit }: { pair: SalesPair; onEdit: () => void }) {
 
       <td className="px-5 py-4">
         {progress.total ? (
-          <span className="inline-flex rounded-md bg-amber-500/10 px-2.5 py-1 text-xs/none font-medium text-amber-700">
+          <span
+            className={`inline-flex rounded-md px-2.5 py-1 text-xs/none font-medium ${
+              progress.done === progress.total
+                ? "bg-success-bg text-success-fg"
+                : "bg-amber-500/10 text-amber-700"
+            }`}
+          >
             {progress.done} of {progress.total}
           </span>
         ) : (

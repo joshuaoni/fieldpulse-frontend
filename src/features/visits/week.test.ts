@@ -4,6 +4,7 @@ import {
   driveLabel,
   partnersOf,
   plannedDays,
+  repStatus,
   visitsByDay,
   weekStartOf,
 } from "./week";
@@ -137,5 +138,57 @@ describe("the drive to a stop", () => {
   // A day nobody routed has no drive times, and inventing one would be a lie.
   it("says nothing when the day was never routed", () => {
     expect(driveLabel(visit({ legMinutes: null }), 1)).toBeNull();
+  });
+});
+
+/**
+ * `Visit.status` is rolled up from both attendances — CHECKED_IN while either
+ * rep is on site, COMPLETED once everyone who checked in has checked out. On
+ * a rep's own screens that is the wrong subject: a partner finishing a call
+ * marked it Visited for someone who never went, and counted towards their
+ * day.
+ */
+describe("where this rep stands on a visit", () => {
+  const attendance = (repId: string, checkInAt: string | null, checkOutAt: string | null) =>
+    ({ id: `att-${repId}`, repId, checkInAt, checkOutAt }) as Visit["attendances"][number];
+
+  const NOW = "2026-09-25T15:00:00.000Z";
+
+  it("does not call it visited because the partner went", () => {
+    const v = visit({
+      status: "COMPLETED",
+      attendances: [attendance("them", NOW, NOW), attendance("me", null, null)],
+    });
+
+    expect(repStatus(v, "me")).toBe("PLANNED");
+    expect(repStatus(v, "them")).toBe("COMPLETED");
+  });
+
+  it("does not call it on site because the partner arrived", () => {
+    const v = visit({
+      status: "CHECKED_IN",
+      attendances: [attendance("them", NOW, null), attendance("me", null, null)],
+    });
+
+    expect(repStatus(v, "me")).toBe("PLANNED");
+  });
+
+  it("says on site once this rep has arrived", () => {
+    const v = visit({ status: "CHECKED_IN", attendances: [attendance("me", NOW, null)] });
+
+    expect(repStatus(v, "me")).toBe("CHECKED_IN");
+  });
+
+  it("says visited once this rep has checked out", () => {
+    const v = visit({ status: "CHECKED_IN", attendances: [attendance("me", NOW, NOW)] });
+
+    expect(repStatus(v, "me")).toBe("COMPLETED");
+  });
+
+  // Nobody went, so there is no attendance to read: this one is the visit's.
+  it("keeps missed, which belongs to the visit rather than a person", () => {
+    const v = visit({ status: "MISSED", attendances: [] });
+
+    expect(repStatus(v, "me")).toBe("MISSED");
   });
 });

@@ -3,11 +3,8 @@
 import { useState } from "react";
 import { ChevronDown, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/member-avatars";
 import { useSession } from "@/lib/session";
-
-function initials(firstName: string, lastName: string): string {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-}
 
 export function ManagerTopbar({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   const { user, signOut } = useSession();
@@ -39,18 +36,7 @@ export function ManagerTopbar({ onOpenSidebar }: { onOpenSidebar: () => void }) 
             aria-expanded={menuOpen}
             className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-sidebar-hover-bg"
           >
-            {user.profileImageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={user.profileImageUrl}
-                alt=""
-                className="size-9 shrink-0 rounded-full object-cover"
-              />
-            ) : (
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-sidebar-active-bg text-sm font-medium text-sidebar-active-foreground">
-                {initials(user.firstName, user.lastName)}
-              </span>
-            )}
+            <Avatar user={user} className="size-9 shrink-0" />
             <span className="hidden text-left sm:block">
               <span className="block text-sm font-medium text-sidebar-foreground">
                 {user.firstName} {user.lastName}

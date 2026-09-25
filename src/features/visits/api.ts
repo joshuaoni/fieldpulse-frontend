@@ -33,6 +33,7 @@ export interface CheckInPayload {
   visitId: string;
   lat: number;
   lng: number;
+  accuracyM?: number | null;
   photo: Blob;
   clientLocalCheckInAt: string;
 }
@@ -41,12 +42,15 @@ export async function checkIn({
   visitId,
   lat,
   lng,
+  accuracyM,
   photo,
   clientLocalCheckInAt,
 }: CheckInPayload): Promise<Visit> {
   const form = new FormData();
   form.set("lat", String(lat));
   form.set("lng", String(lng));
+  
+  if (accuracyM !== null && accuracyM !== undefined) form.set("accuracyM", String(accuracyM));
   form.set("clientLocalCheckInAt", clientLocalCheckInAt);
   form.set("photo", photo, "check-in.jpg");
 
@@ -62,6 +66,7 @@ export interface CheckOutPayload {
   visitId: string;
   lat: number;
   lng: number;
+  accuracyM?: number | null;
   clientLocalCheckOutAt: string;
 }
 
@@ -69,11 +74,12 @@ export async function checkOut({
   visitId,
   lat,
   lng,
+  accuracyM,
   clientLocalCheckOutAt,
 }: CheckOutPayload): Promise<Visit> {
   const { visit } = await api<{ visit: Visit }>(`/api/visits/${visitId}/check-out`, {
     method: "POST",
-    body: JSON.stringify({ lat, lng, clientLocalCheckOutAt }),
+    body: JSON.stringify({ lat, lng, accuracyM, clientLocalCheckOutAt }),
     timeoutMs: FIELD_WRITE_TIMEOUT_MS,
   });
   return visit;

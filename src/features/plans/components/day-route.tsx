@@ -13,13 +13,13 @@ import {
   dayDriveMinutes,
   dayIsEstimated,
   formatMinutes,
-  isPlotted,
+  // isPlotted,
   loopKm,
   type Office,
   type Plan,
   type PlannedStop,
 } from "../types";
-import { RouteMap } from "./route-map";
+// import { RouteMap } from "./route-map";
 import { StopActions } from "./stop-card";
 
 const longDate = (iso: string) =>
@@ -52,7 +52,7 @@ export function DayRoute({
   // const [showMap, setShowMap] = useState(false);
 
   const date = stops[0]?.scheduledFor ?? null;
-  const missing = stops.filter((stop) => !isPlotted(stop)).length;
+  // const missing = stops.filter((stop) => !isPlotted(stop)).length;
   const distance = office ? loopKm(office, stops) : null;
   const driving = dayDriveMinutes(stops);
   const homeMinutes = stops[stops.length - 1]?.returnMinutes ?? null;

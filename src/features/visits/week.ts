@@ -46,6 +46,15 @@ export function partnersOf(visits: Visit[], selfId: string | undefined): PairMem
   return members.filter((member) => member.user.id !== selfId);
 }
 
+export function repStatus(visit: Visit, repId: string | undefined): VisitStatus {
+  const mine = repId ? visit.attendances.find((held) => held.repId === repId) : undefined;
+
+  if (mine?.checkOutAt) return "COMPLETED";
+  if (mine?.checkInAt) return "CHECKED_IN";
+
+  return visit.status === "MISSED" ? "MISSED" : "PLANNED";
+}
+
 export const STATUS_LABEL: Record<VisitStatus, string> = {
   PLANNED: "Not visited",
   CHECKED_IN: "On site",

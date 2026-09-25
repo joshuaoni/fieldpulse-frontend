@@ -9,7 +9,7 @@ const label: Record<VisitStatus, string> = {
 
 const tone: Record<VisitStatus, string> = {
   PLANNED: "border-border text-muted",
-  CHECKED_IN: "border-brand text-brand",
+  CHECKED_IN: "border-chip-active-edge text-chip-active-edge",
   COMPLETED: "border-border text-foreground",
   MISSED: "border-danger text-danger",
 };

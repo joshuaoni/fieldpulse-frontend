@@ -19,6 +19,7 @@ export type QueuedAction =
       visitId: string;
       lat: number;
       lng: number;
+      accuracyM?: number | null;
       photo: Blob;
       clientLocalAt: string;
     }
@@ -27,6 +28,7 @@ export type QueuedAction =
       visitId: string;
       lat: number;
       lng: number;
+      accuracyM?: number | null;
       clientLocalAt: string;
     }
   | {

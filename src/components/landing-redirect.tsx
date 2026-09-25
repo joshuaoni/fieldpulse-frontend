@@ -11,7 +11,7 @@ export function LandingRedirect() {
   const destination = fieldRole.isSuccess
     ? fieldRole.data?.fieldRole === "FIELD_MANAGER"
       ? "/manager/overview"
-      : "/my-week"
+      : "/today"
     : null;
 
   useEffect(() => {

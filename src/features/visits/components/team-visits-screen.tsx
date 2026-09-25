@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { useState } from "react";
 import { useTeamVisits } from "../hooks";
 import type { VisitStatus } from "../types";
@@ -19,13 +20,15 @@ export function TeamVisitsScreen() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 py-8">
+      <Breadcrumb segments={[{ label: "Team visits" }]} />
+
       <header>
-        <Link href="/" className="text-sm text-brand underline">
+        <Link href="/" className="text-sm underline">
           My visits
         </Link>
         <div className="mt-2 flex flex-wrap items-baseline justify-between gap-2">
           <h1 className="text-lg font-semibold tracking-tight">Team visits</h1>
-          <Link href="/manager/plans" className="text-sm text-brand underline">
+          <Link href="/manager/plans" className="text-sm underline">
             Weekly plan →
           </Link>
         </div>
@@ -40,7 +43,7 @@ export function TeamVisitsScreen() {
             onClick={() => setStatus(filter.status)}
             aria-pressed={status === filter.status}
             className={`min-h-11 rounded-lg border px-3 text-sm ${
-              status === filter.status ? "border-brand text-brand" : "border-border text-muted"
+              status === filter.status ? "border-chip-active-edge text-chip-active-edge" : "border-border text-muted"
             }`}
           >
             {filter.label}
