@@ -25,7 +25,7 @@ export const MANAGER_NAV: NavSectionConfig[] = [
   {
     label: "Overview",
     items: [
-      { label: "Overview", href: "/manager/overview", icon: LayoutGrid, disabled: true },
+      { label: "Overview", href: "/manager/overview", icon: LayoutGrid },
       { label: "Weekly plan", href: "/manager/plans", icon: CalendarDays },
       { label: "Check-ins", href: "/manager/check-ins", icon: ClipboardList },
     ],

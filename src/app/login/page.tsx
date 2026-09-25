@@ -4,7 +4,7 @@ export const metadata = { title: "Sign in — FieldPulse" };
 
 export default function LoginPage() {
   return (
-    <main className="manager-tokens flex flex-1 flex-col justify-center bg-background px-6 py-12 text-foreground">
+    <main className="flex flex-1 flex-col justify-center bg-background px-6 py-12 text-foreground">
       <div className="mx-auto w-full max-w-sm">
         <div className="flex items-start justify-center gap-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}

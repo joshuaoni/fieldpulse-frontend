@@ -1,10 +1,10 @@
 import { RequireSession } from "@/components/require-session";
-import { MyVisitsScreen } from "@/features/visits/components/my-visits-screen";
+import { LandingRedirect } from "@/components/landing-redirect";
 
 export default function HomePage() {
   return (
     <RequireSession>
-      <MyVisitsScreen />
+      <LandingRedirect />
     </RequireSession>
   );
 }

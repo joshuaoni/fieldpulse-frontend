@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
+
   /* Neutrals follow the shared Meta4 dashboard (inventory-dashboard's
      bg.page / fg.* scale): a cool blue-grey family, not a green-tinted one.
      --brand stays green and carries the FieldPulse identity through actions,
@@ -70,68 +72,9 @@
 }
 
 
-.manager-surface,
-.manager-tokens {
-  --background: #f4f7f9;
-  --surface: #ffffff;
-  --sunken: #e8eef2;
-  --foreground: #122e3d;
-  --muted: #607d8e;
-  --border: #e8eef2;
-  --brand: #10543e;
-  --brand-ink: #f0fdf7;
-  --danger: #9f1239;
-
-  color-scheme: light;
-}
-
-/**
- * Painting the page is kept apart from declaring the palette, because these
- * rules are unlayered and so outrank every Tailwind utility on the same
- * element. Anything that needs the light palette but paints its own
- * background — an overlay, say — takes `manager-tokens` and keeps its
- * `bg-*` class.
- */
 .manager-surface {
   background: var(--background);
   color: var(--foreground);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* The same family after dark. inventory-dashboard has no dark theme to
-       copy, so these are derived from the light scale rather than invented
-       from the old green one. */
-    --background: #0b1620;
-    --surface: #12202b;
-    --sunken: #16262f;
-    --foreground: #e6eef4;
-    --muted: #8fa3b0;
-    --border: #22333f;
-    --brand: #2f9d76;
-    --brand-ink: #06120d;
-    --danger: #fb7185;
-
-    /* The manager shell stays a fixed light/neutral surface even in dark
-       mode — it mirrors the shared Meta4 dashboard chrome, which has no
-       dark theme of its own, rather than inventing one here. */
-    --sidebar-bg: #ffffff;
-    --sidebar-border: #d1d5dc;
-    --sidebar-foreground: #111723;
-    --sidebar-section-label: #8c9bb0;
-    --sidebar-active-bg: #111723;
-    --sidebar-active-foreground: #ffffff;
-    --sidebar-hover-bg: #f3f4f6;
-    --sidebar-disabled: #b0b8c1;
-    --control-edge: #8c9bb0;
-    --success-bg: #ecfaf2;
-    --success-fg: #0c784a;
-    --chip-bg: #f3f5f8;
-    --chip-edge: #d2d9e4;
-    --chip-active-bg: #edf4ff;
-    --chip-active-edge: #347ff4;
-    --border-strong: #d1d5dc;
-  }
 }
 
 body {

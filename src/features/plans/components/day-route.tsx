@@ -1,7 +1,13 @@
 "use client";
 
-import { Fragment, useState } from "react";
-import { Map, MapPin } from "lucide-react";
+import { 
+  Fragment, 
+  // useState 
+} from "react";
+import { 
+  // Map, 
+  MapPin 
+} from "lucide-react";
 import {
   DAY_NAMES,
   dayDriveMinutes,
@@ -43,7 +49,7 @@ export function DayRoute({
   onAdjust: (stopId: string, move: { dayIndex?: number; targetPlanId?: string }) => void;
   onRemove: (stopId: string) => void;
 }) {
-  const [showMap, setShowMap] = useState(false);
+  // const [showMap, setShowMap] = useState(false);
 
   const date = stops[0]?.scheduledFor ?? null;
   const missing = stops.filter((stop) => !isPlotted(stop)).length;
@@ -98,13 +104,13 @@ export function DayRoute({
         </p>
       </header>
 
-      {missing > 0 && showMap && (
+      {/* {missing > 0 && showMap && (
         <p className="border-b border-border px-5 py-3 text-sm text-muted">
           {missing} {missing === 1 ? "stop has" : "stops have"} no coordinates, so{" "}
           {missing === 1 ? "it is" : "they are"} left off the map. {missing === 1 ? "It is" : "They are"}{" "}
           still in the route.
         </p>
-      )}
+      )} */}
 
       <div className="flex flex-col gap-6 p-5 lg:flex-row">
         <ol className="min-w-0 flex-1">
@@ -146,11 +152,11 @@ export function DayRoute({
           <Terminus label="Back to the office" />
         </ol>
 
-        {office && showMap && (
+        {/* {office && showMap && (
           <div className="shrink-0 self-start">
             <RouteMap office={office} stops={stops} />
           </div>
-        )}
+        )} */}
       </div>
     </section>
   );

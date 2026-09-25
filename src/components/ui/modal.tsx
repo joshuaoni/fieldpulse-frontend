@@ -32,7 +32,7 @@ export function Modal({ onClose, label, header, children }: ModalProps) {
 
   return (
     <div
-      className="manager-tokens fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -43,7 +43,7 @@ export function Modal({ onClose, label, header, children }: ModalProps) {
         aria-modal="true"
         aria-label={label}
         tabIndex={-1}
-        className="flex max-h-full w-full max-w-[30rem] flex-col overflow-hidden rounded-2xl bg-surface text-foreground shadow-xl outline-none"
+        className="flex max-h-full w-full max-w-120 flex-col overflow-hidden rounded-2xl bg-surface text-foreground shadow-xl outline-none"
       >
         <div className="flex items-start gap-3 border-b border-border px-6 py-5">
           <div className="min-w-0 flex-1">{header}</div>

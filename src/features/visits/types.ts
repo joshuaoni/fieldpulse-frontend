@@ -58,6 +58,9 @@ export interface Visit {
   status: VisitStatus;
   scheduledFor: string | null;
   planId: string | null;
+  stopOrder: number | null;
+  legMinutes: number | null;
+  returnMinutes: number | null;
   createdAt: string;
   updatedAt: string;
   pair?: { id: string; name: string | null; members?: PairMember[] };
