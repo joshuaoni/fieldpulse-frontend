@@ -3,6 +3,7 @@ import {
   BarChart3,
   CalendarDays,
   ClipboardList,
+  History,
   LayoutGrid,
   MapPinned,
   Users,
@@ -37,11 +38,8 @@ export const MANAGER_NAV: NavSectionConfig[] = [
       { label: "Reports", href: "/manager/reports", icon: BarChart3 },
     ],
   },
-  // {
-  //   label: "System settings",
-  //   items: [
-  //     { label: "Apply for leave", href: "/manager/leave", icon: CalendarOff, disabled: true },
-  //     { label: "My tasks", href: "/manager/tasks", icon: ListChecks, disabled: true },
-  //   ],
-  // },
+  {
+    label: "Administration",
+    items: [{ label: "Activity log", href: "/manager/activity", icon: History }],
+  },
 ];

@@ -35,6 +35,8 @@
   --chip-active-bg: #edf4ff;
   --chip-active-edge: #347ff4;
 
+  --border-strong: #d1d5dc;
+
   --control-edge: #8c9bb0;
 }
 
@@ -63,6 +65,7 @@
   --color-chip-edge: var(--chip-edge);
   --color-chip-active-bg: var(--chip-active-bg);
   --color-chip-active-edge: var(--chip-active-edge);
+  --color-border-strong: var(--border-strong);
   --font-sans: var(--font-dm-sans);
 }
 
@@ -127,6 +130,7 @@
     --chip-edge: #d2d9e4;
     --chip-active-bg: #edf4ff;
     --chip-active-edge: #347ff4;
+    --border-strong: #d1d5dc;
   }
 }
 

@@ -4,30 +4,28 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CHIP, CHIP_OFF, CHIP_ON } from "@/components/ui/chip";
 import { Modal } from "@/components/ui/modal";
-import { OUTCOMES, OUTCOME_LABEL, type VisitOutcome } from "@/lib/outcomes";
 import {
-  DATE_RANGE_LABEL,
-  NO_FILTERS,
-  type DateRange,
-  type ReportFilters,
+  ENTITY_LABEL,
+  ENTITY_TYPES,
+  NO_ACTIVITY_FILTERS,
+  actionLabel,
+  type ActivityFilters,
 } from "../types";
 
-const RANGES: DateRange[] = ["TODAY", "WEEK", "MONTH"];
-
-export function ReportFiltersDialog({
+export function ActivityFiltersDialog({
   filters,
-  sectors,
+  actions,
   onApply,
   onClose,
 }: {
-  filters: ReportFilters;
-  sectors: string[];
-  onApply: (filters: ReportFilters) => void;
+  filters: ActivityFilters;
+  actions: string[];
+  onApply: (filters: ActivityFilters) => void;
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState(filters);
 
-  const toggle = <T,>(list: T[], value: T): T[] =>
+  const toggle = (list: string[], value: string): string[] =>
     list.includes(value) ? list.filter((held) => held !== value) : [...list, value];
 
   return (
@@ -36,50 +34,38 @@ export function ReportFiltersDialog({
       label="Filters"
       header={<h2 className="text-lg font-semibold tracking-tight">Filters</h2>}
     >
-      <Group label="By outcome">
-        {OUTCOMES.map((outcome) => (
+      <Group label="By area">
+        {ENTITY_TYPES.map((entityType) => (
           <Chip
-            key={outcome}
-            selected={draft.outcomes.includes(outcome)}
+            key={entityType}
+            selected={draft.entityTypes.includes(entityType)}
             onClick={() =>
-              setDraft({ ...draft, outcomes: toggle<VisitOutcome>(draft.outcomes, outcome) })
+              setDraft({ ...draft, entityTypes: toggle(draft.entityTypes, entityType) })
             }
           >
-            {OUTCOME_LABEL[outcome]}
+            {ENTITY_LABEL[entityType]}
           </Chip>
         ))}
       </Group>
 
-      {sectors.length > 0 && (
-        <Group label="By sector">
-          {sectors.map((sector) => (
+      {actions.length > 0 && (
+        <Group label="By what happened">
+          {actions.map((action) => (
             <Chip
-              key={sector}
-              selected={draft.sectors.includes(sector)}
-              onClick={() => setDraft({ ...draft, sectors: toggle(draft.sectors, sector) })}
+              key={action}
+              selected={draft.actions.includes(action)}
+              onClick={() => setDraft({ ...draft, actions: toggle(draft.actions, action) })}
             >
-              {sector}
+              {actionLabel(action)}
             </Chip>
           ))}
         </Group>
       )}
 
-      <Group label="By date">
-        {RANGES.map((range) => (
-          <Chip
-            key={range}
-            selected={draft.range === range}
-            onClick={() => setDraft({ ...draft, range })}
-          >
-            {DATE_RANGE_LABEL[range]}
-          </Chip>
-        ))}
-      </Group>
-
       <div className="mt-8 flex justify-end gap-3">
         <Button
           variant="outline"
-          onClick={() => setDraft({ ...NO_FILTERS, search: draft.search })}
+          onClick={() => setDraft({ ...NO_ACTIVITY_FILTERS, search: draft.search })}
         >
           Clear filters
         </Button>

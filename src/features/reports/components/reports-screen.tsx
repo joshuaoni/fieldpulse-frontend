@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Download, ListFilter, Search, TrendingDown, TrendingUp, X } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { CHIP, CHIP_ON } from "@/components/ui/chip";
 import { MemberAvatars } from "@/components/ui/member-avatars";
 import { OUTCOME_LABEL, type VisitOutcome } from "@/lib/outcomes";
 import { pairLabel } from "@/lib/pairs";
@@ -16,7 +17,7 @@ import {
   type ReportFilters,
   type TeamMetric,
 } from "../types";
-import { CHIP, CHIP_ON, ReportFiltersDialog } from "./report-filters";
+import { ReportFiltersDialog } from "./report-filters";
 
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
