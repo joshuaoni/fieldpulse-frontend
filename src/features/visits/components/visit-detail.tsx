@@ -76,6 +76,7 @@ export function VisitDetail({ visitId }: { visitId: string }) {
             key={attendance.id}
             attendance={attendance}
             isYou={attendance.repId === user?.id}
+            visitCreatedAt={visit.createdAt}
           />
         ))}
     </div>

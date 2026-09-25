@@ -3,6 +3,7 @@
 import { Modal } from "@/components/ui/modal";
 import { OUTCOME_LABEL, type VisitOutcome } from "@/lib/outcomes";
 import { pairLabel } from "@/lib/pairs";
+import { DeviceTimeNote } from "@/features/visits/components/device-time-note";
 import {
   STATUS_LABEL,
   describeConcerns,
@@ -96,6 +97,8 @@ export function CheckInDetail({ checkIn, onClose }: { checkIn: CheckIn; onClose:
           Checked in by {checkIn.rep.firstName}
           {report && ` · written up by ${report.by.firstName}`}
         </p>
+
+        <DeviceTimeNote verifiedAt={checkIn.verifiedAt} deviceAt={checkIn.checkInAt} />
 
         {report ? (
           <>
