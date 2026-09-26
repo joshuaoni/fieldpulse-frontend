@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Download, ListFilter, Search, TrendingDown, TrendingUp, X } from "lucide-react";
+import { Download, ListFilter, Search, X } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { StatCard } from "@/components/ui/stat-card";
 import { CHIP, CHIP_ON } from "@/components/ui/chip";
 import { MemberAvatars } from "@/components/ui/member-avatars";
-import { OUTCOME_LABEL, type VisitOutcome } from "@/lib/outcomes";
+import { OUTCOME_LABEL, OUTCOME_TONE } from "@/lib/outcomes";
 import { pairLabel } from "@/lib/pairs";
 import { useExportReports, useReports, useTeamOverview } from "../hooks";
 import {
@@ -217,33 +218,19 @@ function Stat({
   const change = metric && metric.previous !== null ? metric.value - metric.previous : null;
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
-      <p className="text-xs font-medium tracking-wide text-muted uppercase">{label}</p>
-
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <p className="flex items-center gap-2 text-2xl font-semibold">
-          {metric ? format(metric.value) : "—"}
-
-          {change !== null && change !== 0 && (
-            <span
-              title={`${change > 0 ? "Up" : "Down"} from ${format(metric!.previous!)} the period before`}
-              className={change > 0 ? "text-success-fg" : "text-danger"}
-            >
-              {change > 0 ? (
-                <TrendingUp size={20} aria-hidden />
-              ) : (
-                <TrendingDown size={20} aria-hidden />
-              )}
-            </span>
-          )}
-        </p>
-
-        {icon && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={icon} alt="" aria-hidden className="size-8 shrink-0" />
-        )}
-      </div>
-    </div>
+    <StatCard
+      label={label}
+      value={metric ? format(metric.value) : "—"}
+      icon={icon}
+      trend={
+        change !== null && change !== 0
+          ? {
+              direction: change > 0 ? "up" : "down",
+              title: `${change > 0 ? "Up" : "Down"} from ${format(metric!.previous!)} the period before`,
+            }
+          : null
+      }
+    />
   );
 }
 
@@ -262,14 +249,6 @@ function AppliedChip({ label, onRemove }: { label: string; onRemove: () => void 
     </span>
   );
 }
-
-const OUTCOME_TONE: Record<VisitOutcome, string> = {
-  INTERESTED: "bg-success-bg text-success-fg",
-  CLOSED: "bg-success-bg text-success-fg",
-  FOLLOW_UP_NEEDED: "bg-amber-500/10 text-amber-700",
-  NOT_VIABLE: "bg-danger/10 text-danger",
-  OTHER: "bg-sunken text-muted",
-};
 
 function ReportRow({ report }: { report: FieldReport }) {
   return (

@@ -15,6 +15,14 @@ export const OUTCOME_LABEL: Record<VisitOutcome, string> = {
 
 export const OUTCOMES = Object.keys(OUTCOME_LABEL) as VisitOutcome[];
 
+export const OUTCOME_TONE: Record<VisitOutcome, string> = {
+  INTERESTED: "bg-success-bg text-success-fg",
+  CLOSED: "bg-success-bg text-success-fg",
+  FOLLOW_UP_NEEDED: "bg-amber-500/10 text-amber-700",
+  NOT_VIABLE: "bg-danger/10 text-danger",
+  OTHER: "bg-sunken text-muted",
+};
+
 export function outcomeLabel(outcome: string | null): string | null {
   if (!outcome) return null;
   return OUTCOME_LABEL[outcome as VisitOutcome] ?? outcome;

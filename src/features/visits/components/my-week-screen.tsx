@@ -3,8 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Bell, ChevronLeft, Route } from "lucide-react";
-import { Modal } from "@/components/ui/modal";
-import { RemindersPanel } from "@/features/reminders/components/reminders-panel";
 import { useReminderSchedule } from "@/features/reminders/hooks";
 import { overdueReminders } from "@/features/reminders/types";
 import { useSession } from "@/lib/session";
@@ -34,7 +32,6 @@ export function MyWeekScreen() {
   const { user } = useSession();
   const weekStart = useMemo(() => weekStartOf(), []);
   const [selected, setSelected] = useState(() => todayIndex(weekStart) ?? 0);
-  const [remindersOpen, setRemindersOpen] = useState(false);
 
   // Replays anything recorded offline as soon as this screen mounts, and
   // again whenever the connection returns.
@@ -68,10 +65,9 @@ export function MyWeekScreen() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setRemindersOpen(true)}
-          aria-label={due ? `Reminders, ${due} due` : "Reminders"}
+        <Link
+          href="/notifications"
+          aria-label={due ? `Notifications, ${due} due` : "Notifications"}
           className="relative flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-surface"
         >
           <Bell size={18} aria-hidden />
@@ -81,7 +77,7 @@ export function MyWeekScreen() {
               className="absolute top-2 right-2 size-2 rounded-full bg-danger ring-2 ring-surface"
             />
           )}
-        </button>
+        </Link>
       </header>
 
       <PendingActionsBanner />
@@ -158,15 +154,6 @@ export function MyWeekScreen() {
         ))}
       </ul>
 
-      {remindersOpen && (
-        <Modal
-          onClose={() => setRemindersOpen(false)}
-          label="Reminders"
-          header={<h2 className="text-lg font-semibold tracking-tight">Reminders</h2>}
-        >
-          <RemindersPanel />
-        </Modal>
-      )}
     </main>
   );
 }

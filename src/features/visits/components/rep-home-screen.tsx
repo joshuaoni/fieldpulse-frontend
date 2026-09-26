@@ -4,9 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import { Avatar } from "@/components/ui/member-avatars";
-import { Modal } from "@/components/ui/modal";
 import { useMyFieldRole } from "@/features/field-roles/hooks";
-import { RemindersPanel } from "@/features/reminders/components/reminders-panel";
 import { useReminderSchedule } from "@/features/reminders/hooks";
 import { overdueReminders } from "@/features/reminders/types";
 import { useSession } from "@/lib/session";
@@ -45,7 +43,7 @@ export function RepHomeScreen() {
   const { user } = useSession();
   const fieldRole = useMyFieldRole();
   const [filter, setFilter] = useState<Filter>("ALL");
-  const [remindersOpen, setRemindersOpen] = useState(false);
+
 
   // Replays anything recorded offline as soon as this screen mounts, and
   // again whenever the connection returns.
@@ -106,10 +104,9 @@ export function RepHomeScreen() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setRemindersOpen(true)}
-          aria-label={due ? `Reminders, ${due} due` : "Reminders"}
+        <Link
+          href="/notifications"
+          aria-label={due ? `Notifications, ${due} due` : "Notifications"}
           className="relative flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-surface"
         >
           <Bell size={18} aria-hidden />
@@ -119,7 +116,7 @@ export function RepHomeScreen() {
               className="absolute top-2 right-2 size-2 rounded-full bg-danger ring-2 ring-surface"
             />
           )}
-        </button>
+        </Link>
       </header>
 
       {pending > 0 && (
@@ -197,15 +194,6 @@ export function RepHomeScreen() {
         ))}
       </ul>
 
-      {remindersOpen && (
-        <Modal
-          onClose={() => setRemindersOpen(false)}
-          label="Reminders"
-          header={<h2 className="text-lg font-semibold tracking-tight">Reminders</h2>}
-        >
-          <RemindersPanel />
-        </Modal>
-      )}
     </main>
   );
 }
