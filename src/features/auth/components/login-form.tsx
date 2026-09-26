@@ -45,7 +45,6 @@ export function LoginForm({ className = "" }: { className?: string }) {
   const [revealed, setRevealed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [askedToReset, setAskedToReset] = useState(false);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -98,22 +97,6 @@ export function LoginForm({ className = "" }: { className?: string }) {
           <img src="/icons/eye.svg" alt="" aria-hidden className="size-5" />
         </button>
       </Field>
-
-      <div className="mt-3 flex justify-end">
-        <button
-          type="button"
-          onClick={() => setAskedToReset(true)}
-          className="text-sm text-muted hover:text-foreground hover:underline"
-        >
-          Forgot Password?
-        </button>
-      </div>
-
-      {askedToReset && (
-        <p className="mt-2 text-right text-sm text-muted">
-          Sign-in is held in Meta4 ERP — ask your administrator to reset it.
-        </p>
-      )}
 
       {error && (
         <p role="alert" className="mt-4 text-sm text-danger">

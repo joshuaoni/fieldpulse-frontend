@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { placeDrop, type DropPlacement } from "@/components/ui/drop-placement";
+import { Select } from "@/components/ui/select";
 import { DAY_NAMES, pairLabel, type Plan } from "../types";
 
 /**
@@ -22,12 +24,20 @@ export function StopActions({
   onRemove: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [placement, setPlacement] = useState<DropPlacement>({ side: "below", maxHeight: 260 });
+  const trigger = useRef<HTMLButtonElement>(null);
+
+  const reveal = () => {
+    setPlacement(placeDrop(trigger.current, 260));
+    setOpen(true);
+  };
 
   return (
     <div className="relative shrink-0">
       <button
+        ref={trigger}
         type="button"
-        onClick={() => setOpen((wasOpen) => !wasOpen)}
+        onClick={() => (open ? setOpen(false) : reveal())}
         aria-expanded={open}
         aria-label="Move or remove this stop"
         className="flex size-8 items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-foreground"
@@ -46,45 +56,43 @@ export function StopActions({
             className="fixed inset-0 z-10 cursor-default"
           />
 
-          <div className="absolute top-9 right-0 z-20 w-56 rounded-xl border border-border bg-surface p-3 shadow-lg">
-            <label className="block text-xs font-medium text-muted">
+          <div
+            data-side={placement.side}
+            className={`absolute right-0 z-20 w-56 rounded-xl border border-border bg-surface p-3 shadow-lg ${
+              placement.side === "above" ? "bottom-9" : "top-9"
+            }`}
+          >
+            <p className="block text-xs font-medium text-muted">
               Move to a different day
-              <select
-                value=""
-                disabled={busy}
-                onChange={(event) => onMoveDay(Number(event.target.value))}
-                className="mt-1.5 min-h-10 w-full rounded-lg border border-border bg-background px-2 text-sm text-foreground"
-              >
-                <option value="" disabled>
-                  Choose a day…
-                </option>
-                {DAY_NAMES.map((name, index) => (
-                  <option key={name} value={index}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            </p>
+            <Select
+              value=""
+              disabled={busy}
+              size="sm"
+              label="Move to a different day"
+              placeholder="Choose a day…"
+              options={DAY_NAMES.map((name, index) => ({ value: String(index), label: name }))}
+              onChange={(day) => onMoveDay(Number(day))}
+              className="mt-1.5"
+            />
 
             {otherPlans.length > 0 && (
-              <label className="mt-3 block text-xs font-medium text-muted">
-                Hand to another pair
-                <select
+              <>
+                <p className="mt-3 block text-xs font-medium text-muted">Hand to another pair</p>
+                <Select
                   value=""
                   disabled={busy}
-                  onChange={(event) => onMovePair(event.target.value)}
-                  className="mt-1.5 min-h-10 w-full rounded-lg border border-border bg-background px-2 text-sm text-foreground"
-                >
-                  <option value="" disabled>
-                    Choose a pair…
-                  </option>
-                  {otherPlans.map((other) => (
-                    <option key={other.id} value={other.id}>
-                      {pairLabel(other)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  size="sm"
+                  label="Hand to another pair"
+                  placeholder="Choose a pair…"
+                  options={otherPlans.map((other) => ({
+                    value: other.id,
+                    label: pairLabel(other),
+                  }))}
+                  onChange={onMovePair}
+                  className="mt-1.5"
+                />
+              </>
             )}
 
             <Button

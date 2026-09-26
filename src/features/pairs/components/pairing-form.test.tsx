@@ -78,6 +78,17 @@ function show(pair?: SalesPair) {
   return { onClose };
 }
 
+/**
+ * The seats are listboxes rather than native dropdowns, so a choice is made
+ * the way a person makes it: open the control, then pick the name.
+ */
+async function choose(seat: string, name: RegExp) {
+  fireEvent.click(await screen.findByLabelText(seat));
+  fireEvent.click(await screen.findByRole("option", { name }));
+}
+
+const seated = (seat: string) => screen.getByLabelText(seat).textContent;
+
 describe("assigning the reps in a pairing", () => {
   it("opens with one seat on a new pairing and names it Member 1", async () => {
     show();
@@ -100,11 +111,10 @@ describe("assigning the reps in a pairing", () => {
   it("opens an existing pairing with a seat filled per member", async () => {
     show(PAIR);
 
-    const first = (await screen.findByLabelText("Member 1")) as HTMLSelectElement;
-    const second = screen.getByLabelText("Member 2") as HTMLSelectElement;
+    await screen.findByLabelText("Member 1");
 
-    expect(first.value).toBe("u1");
-    expect(second.value).toBe("u2");
+    expect(seated("Member 1")).toContain("Chisom");
+    expect(seated("Member 2")).toContain("Ademola");
   });
 
   /**
@@ -117,9 +127,7 @@ describe("assigning the reps in a pairing", () => {
     addPairMember.mockResolvedValue(PAIR);
     const { onClose } = show(PAIR);
 
-    await screen.findAllByRole("option", { name: /Zainab/ });
-    const second = screen.getByLabelText("Member 2") as HTMLSelectElement;
-    fireEvent.change(second, { target: { value: "u3" } });
+    await choose("Member 2", /Zainab/);
     fireEvent.click(screen.getByText("Save Pairing"));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
@@ -135,8 +143,7 @@ describe("assigning the reps in a pairing", () => {
     createPair.mockResolvedValue(PAIR);
     const { onClose } = show();
 
-    await screen.findAllByRole("option", { name: /Zainab/ });
-    fireEvent.change(screen.getByLabelText("Member 1"), { target: { value: "u3" } });
+    await choose("Member 1", /Zainab/);
     fireEvent.click(screen.getByText("Save Pairing"));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
@@ -146,9 +153,7 @@ describe("assigning the reps in a pairing", () => {
   it("refuses the same rep in both seats rather than letting the API do it", async () => {
     show(PAIR);
 
-    await screen.findAllByRole("option", { name: /Zainab/ });
-    const second = screen.getByLabelText("Member 2") as HTMLSelectElement;
-    fireEvent.change(second, { target: { value: "u1" } });
+    await choose("Member 2", /Chisom/);
     fireEvent.click(screen.getByText("Save Pairing"));
 
     expect(await screen.findByRole("alert")).toBeDefined();
@@ -160,6 +165,7 @@ describe("assigning the reps in a pairing", () => {
   it("lists a rep who is already paired elsewhere, and says so", async () => {
     show();
 
+    fireEvent.click(await screen.findByLabelText("Member 1"));
     const taken = await screen.findByRole("option", { name: /Chisom/ });
 
     expect(taken.textContent).toContain("already paired");

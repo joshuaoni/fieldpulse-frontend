@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { Select } from "@/components/ui/select";
 import { useAssignableReps, useSavePairing } from "../hooks";
 import {
   PAIR_SIZE,
@@ -90,20 +91,18 @@ export function PairingForm({ pair, onClose }: { pair?: SalesPair; onClose: () =
             )}
           </div>
 
-          <select
+          <Select
             id={`member-${index}`}
             value={seat}
-            onChange={(event) => setSeat(index, event.target.value)}
-            className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-base outline-none focus:border-brand"
-          >
-            <option value="">{reps.isPending ? "Loading reps…" : "Select a rep"}</option>
-            {options.map((rep) => (
-              <option key={rep.id} value={rep.id}>
-                {fullName(rep)}
-                {rep.pairId && rep.pairId !== pair?.id ? " — already paired" : ""}
-              </option>
-            ))}
-          </select>
+            onChange={(chosen) => setSeat(index, chosen)}
+            placeholder={reps.isPending ? "Loading reps…" : "Select a rep"}
+            options={options.map((rep) => ({
+              value: rep.id,
+              label: fullName(rep),
+              hint: rep.pairId && rep.pairId !== pair?.id ? "— already paired" : undefined,
+            }))}
+            className="mt-1.5"
+          />
         </div>
       ))}
 
