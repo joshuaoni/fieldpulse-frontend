@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import type { VisitOutcome } from "@/lib/outcomes";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ApiError, isNetworkError } from "@/lib/errors";
 import {
   count as queueCount,
@@ -13,6 +13,8 @@ import {
   type QueuedAction,
 } from "@/lib/offline-queue";
 import * as visitsApi from "./api";
+import { todayWindow } from "./week";
+import { myAttendance } from "./types";
 import type {
   Visit,
   VisitAttendance,
@@ -185,6 +187,22 @@ export function useQueuedFor(visitId: string): Set<QueuedAction["kind"]> {
   }, [visitId]);
 
   return kinds;
+}
+
+export function useOpenVisitElsewhere(repId: string | undefined, exceptVisitId: string) {
+  const period = useMemo(() => todayWindow(), []);
+  const { data } = useMyVisits({ ...period, pageSize: 100 });
+
+  return useMemo(() => {
+    if (!repId) return undefined;
+
+    return (data?.visits ?? []).find((visit) => {
+      if (visit.id === exceptVisitId) return false;
+      const mine = myAttendance(visit, repId);
+
+      return Boolean(mine?.checkInAt && !mine.checkOutAt);
+    });
+  }, [data, repId, exceptVisitId]);
 }
 
 /**

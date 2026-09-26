@@ -7,6 +7,7 @@ import { pairLabel } from "@/lib/pairs";
 import { useSession } from "@/lib/session";
 import { useVisit } from "../hooks";
 import { myAttendance } from "../types";
+import { shownStatus } from "../week";
 import { AttendanceCard } from "./attendance-card";
 import { ReportSubmitted } from "./report-submitted";
 import { VisitActions } from "./visit-actions";
@@ -53,7 +54,7 @@ export function VisitDetail({ visitId }: { visitId: string }) {
           <p className="mt-0.5 text-xs text-muted">{pairLabel(visit)}</p>
         </div>
 
-        <VisitStatusBadge status={visit.status} />
+        <VisitStatusBadge status={shownStatus(visit, user?.id)} />
       </header>
 
       {/* A manager viewing someone else's visit gets no action panel. */}

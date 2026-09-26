@@ -10,13 +10,14 @@ const checkOut = vi.fn();
 const submitReport = vi.fn();
 const onSubmitted = vi.fn();
 const getCurrentPosition = vi.fn();
+const fetchMyVisits = vi.fn();
 
 vi.mock("../api", () => ({
   checkIn: (...args: unknown[]) => checkIn(...args),
   checkOut: (...args: unknown[]) => checkOut(...args),
   submitReport: (...args: unknown[]) => submitReport(...args),
   fetchVisit: vi.fn(),
-  fetchMyVisits: vi.fn(),
+  fetchMyVisits: (...args: unknown[]) => fetchMyVisits(...args),
   fetchTeamVisits: vi.fn(),
 }));
 
@@ -300,6 +301,68 @@ describe("with no connection", () => {
   });
 });
 
+
+/**
+ * A rep is in one place at a time. The server refuses a second arrival, but
+ * it should not come to that — and offline the refusal would not arrive until
+ * the queue drained, by which time the check-in would be lost.
+ */
+describe("while still checked in somewhere else", () => {
+  const elsewhere = {
+    ...visit([attendance({ id: "att-2", checkInAt: "2026-09-26T09:00:00.000Z" })]),
+    id: "visit-2",
+    lead: { id: "lead-2", companyName: "Bright Field Ltd", address: null },
+  } as Visit;
+
+  const dayHolds = (visits: Visit[]) =>
+    fetchMyVisits.mockResolvedValue({
+      visits,
+      pagination: { page: 1, pageSize: 100, totalItems: visits.length, totalPages: 1 },
+    });
+
+  it("says where they still are instead of offering the check-in", async () => {
+    dayHolds([elsewhere, visit([attendance()])]);
+    show(visit([attendance()]));
+
+    expect(await screen.findByText(/still checked in/i)).toBeDefined();
+    expect(screen.queryByText("Check in")).toBeNull();
+  });
+
+  it("offers the way back to it", async () => {
+    dayHolds([elsewhere]);
+    show(visit([attendance()]));
+
+    const back = await screen.findByText(/Go to Bright Field Ltd/);
+    expect(back.closest("a")?.getAttribute("href")).toBe("/visits/visit-2");
+  });
+
+  it("lets them in once that one is checked out of", async () => {
+    dayHolds([
+      {
+        ...elsewhere,
+        attendances: [
+          attendance({
+            id: "att-2",
+            checkInAt: "2026-09-26T09:00:00.000Z",
+            checkOutAt: "2026-09-26T09:40:00.000Z",
+          }),
+        ],
+      } as Visit,
+    ]);
+    show(visit([attendance()]));
+
+    expect(await screen.findByText("Check in")).toBeDefined();
+  });
+
+  // Nothing cached is not evidence that they are free, and the server is the
+  // one that decides — so an unknown day does not stand in their way.
+  it("does not block on a day it could not load", async () => {
+    fetchMyVisits.mockRejectedValue(new Error("Network request failed"));
+    show(visit([attendance()]));
+
+    expect(await screen.findByText("Check in")).toBeDefined();
+  });
+});
 
 /**
  * Submitting ends the visit. The step no longer renders the confirmation

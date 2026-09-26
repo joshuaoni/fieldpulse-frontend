@@ -5,6 +5,7 @@ import {
   partnersOf,
   plannedDays,
   repStatus,
+  shownStatus,
   visitsByDay,
   weekStartOf,
 } from "./week";
@@ -190,5 +191,70 @@ describe("where this rep stands on a visit", () => {
     const v = visit({ status: "MISSED", attendances: [] });
 
     expect(repStatus(v, "me")).toBe("MISSED");
+  });
+});
+
+/**
+ * Which of those two answers a screen should print.
+ *
+ * The badge on a visit was always the pair's, so a rep walking into their
+ * second shop of the day was told they were "On site" there — beside a panel
+ * saying they were still checked in at the first one.
+ */
+describe("the standing shown beside a visit", () => {
+  const pair = {
+    id: "pair-1",
+    name: null,
+    members: [
+      { user: { id: "me", firstName: "Chisom", lastName: "Ifechukwu" } },
+      { user: { id: "them", firstName: "Dayo", lastName: "Lekan" } },
+    ],
+  };
+
+  const attendance = (repId: string, checkInAt: string | null, checkOutAt: string | null) =>
+    ({ id: `att-${repId}`, repId, checkInAt, checkOutAt }) as Visit["attendances"][number];
+
+  const NOW = "2026-09-26T15:00:00.000Z";
+
+  it("does not put a rep on site at a shop their partner is standing in", () => {
+    const v = visit({
+      status: "CHECKED_IN",
+      pair,
+      attendances: [attendance("them", NOW, null)],
+    });
+
+    expect(shownStatus(v, "me")).toBe("PLANNED");
+  });
+
+  it("says on site once the rep themselves has arrived", () => {
+    const v = visit({ status: "CHECKED_IN", pair, attendances: [attendance("me", NOW, null)] });
+
+    expect(shownStatus(v, "me")).toBe("CHECKED_IN");
+  });
+
+  // A manager is not on the visit, so the pair's roll-up is exactly the
+  // answer they want: has anybody arrived?
+  it("gives a manager the pair's standing, not one rep's", () => {
+    const v = visit({
+      status: "CHECKED_IN",
+      pair,
+      attendances: [attendance("them", NOW, null)],
+    });
+
+    expect(shownStatus(v, "manager-1")).toBe("CHECKED_IN");
+  });
+
+  it("falls back to the visit's own when nobody is looking in particular", () => {
+    const v = visit({ status: "COMPLETED", pair, attendances: [] });
+
+    expect(shownStatus(v, undefined)).toBe("COMPLETED");
+  });
+
+  // A rep with an attendance row but no pair membership loaded is still on
+  // this visit — the row is the stronger evidence of the two.
+  it("counts a rep by their own attendance when the pair is not loaded", () => {
+    const v = visit({ status: "CHECKED_IN", attendances: [attendance("me", NOW, NOW)] });
+
+    expect(shownStatus(v, "me")).toBe("COMPLETED");
   });
 });

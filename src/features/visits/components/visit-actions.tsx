@@ -8,7 +8,14 @@ import { getCurrentPosition, isCancelled, type Fix } from "@/lib/geolocation";
 import { secondsSince, useTicker } from "@/lib/use-elapsed";
 import { messageUnlessCancelled } from "./position-search";
 import { arrivedAt } from "../time";
-import { useCheckIn, useCheckOut, useQueuedFor, useSubmitReport } from "../hooks";
+import Link from "next/link";
+import {
+  useCheckIn,
+  useCheckOut,
+  useOpenVisitElsewhere,
+  useQueuedFor,
+  useSubmitReport,
+} from "../hooks";
 import { myAttendance, type SubmittedReport, type Visit, type VisitAttendance } from "../types";
 import { CameraCapture } from "./camera-capture";
 
@@ -31,6 +38,7 @@ export function VisitActions({
 }) {
   const mine = myAttendance(visit, repId);
   const queued = useQueuedFor(visit.id);
+  const openElsewhere = useOpenVisitElsewhere(repId, visit.id);
 
   /**
    * Anything sitting in the queue has happened as far as the rep is concerned
@@ -42,7 +50,11 @@ export function VisitActions({
   const checkedIn = Boolean(mine?.checkInAt) || queued.has("check-in");
   const checkedOut = Boolean(mine?.checkOutAt) || queued.has("check-out");
 
-  if (!checkedIn) return <CheckInStep visitId={visit.id} repId={repId} />;
+  if (!checkedIn) {
+    if (openElsewhere) return <FinishThatFirst visit={openElsewhere} />;
+
+    return <CheckInStep visitId={visit.id} repId={repId} />;
+  }
 
   if (!checkedOut) {
     return (
@@ -506,6 +518,28 @@ function ReportStep({
         {busy ? "Submitting…" : "Submit Report"}
       </PrimaryAction>
     </form>
+  );
+}
+
+/**
+ * The rep is already somewhere else. Two open check-ins cannot both be true.
+ */
+function FinishThatFirst({ visit }: { visit: Visit }) {
+  return (
+    <section className="rounded-2xl border border-border bg-surface p-4">
+      <h2 className="font-medium">You are still checked in</h2>
+      <p className="mt-1 text-sm text-muted">
+        You have not checked out of {visit.lead.companyName}. Finish there before arriving
+        anywhere else.
+      </p>
+
+      <Link
+        href={`/visits/${visit.id}`}
+        className="mt-4 flex h-12 w-full items-center justify-center rounded-full bg-sidebar-active-bg text-base font-medium text-sidebar-active-foreground"
+      >
+        Go to {visit.lead.companyName}
+      </Link>
+    </section>
   );
 }
 

@@ -19,6 +19,16 @@ export function weekWindow(weekStart: Date): { from: string; to: string } {
 }
 
 /** Monday to Friday, each holding that day's stops in route order. */
+/** Today, bounded to the day — the window the rep's own screens ask for. */
+export function todayWindow(): { from: string; to: string } {
+  const now = new Date();
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+
+  return { from: start.toISOString(), to: end.toISOString() };
+}
+
 export function visitsByDay(visits: Visit[], weekStart: Date): Visit[][] {
   const days: Visit[][] = DAY_NAMES.map(() => []);
 
@@ -53,6 +63,19 @@ export function repStatus(visit: Visit, repId: string | undefined): VisitStatus 
   if (mine?.checkInAt) return "CHECKED_IN";
 
   return visit.status === "MISSED" ? "MISSED" : "PLANNED";
+}
+
+/**
+ * The standing to show beside a visit, to whoever is looking at it.
+ */
+export function shownStatus(visit: Visit, viewerId: string | undefined): VisitStatus {
+  if (!viewerId) return visit.status;
+
+  const theirs =
+    (visit.pair?.members ?? []).some((member) => member.user.id === viewerId) ||
+    visit.attendances.some((attendance) => attendance.repId === viewerId);
+
+  return theirs ? repStatus(visit, viewerId) : visit.status;
 }
 
 export const STATUS_LABEL: Record<VisitStatus, string> = {
