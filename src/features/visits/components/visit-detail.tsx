@@ -2,7 +2,7 @@
 
 import { MapPin } from "lucide-react";
 import { useState } from "react";
-import { useMyFieldRole } from "@/features/field-roles/hooks";
+import { useMyFieldRole } from "@/lib/field-role";
 import { pairLabel } from "@/lib/pairs";
 import { useSession } from "@/lib/session";
 import { useVisit } from "../hooks";
@@ -11,9 +11,9 @@ import { shownStatus } from "../week";
 import { AttendanceCard } from "./attendance-card";
 import { ReportSubmitted } from "./report-submitted";
 import { VisitActions } from "./visit-actions";
-import { UnplannedBadge } from "./unplanned-badge";
+import { UnplannedBadge } from "@/components/unplanned-badge";
 import { VisitStatusBadge } from "./visit-status-badge";
-import { LeadEngagementPanel } from "@/features/leads/components/lead-engagement-panel";
+import { LeadEngagementPanel } from "@/components/lead-engagement-panel";
 
 export function VisitDetail({ visitId }: { visitId: string }) {
   const [justSubmitted, setJustSubmitted] = useState<{ queued: boolean } | null>(null);

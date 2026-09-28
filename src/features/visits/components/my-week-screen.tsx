@@ -2,9 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Bell, ChevronLeft, Route } from "lucide-react";
-import { useReminderSchedule } from "@/features/reminders/hooks";
-import { overdueReminders } from "@/features/reminders/types";
+import { ChevronLeft, Route } from "lucide-react";
+import { NotificationsBell } from "@/components/notifications-bell";
 import { useSession } from "@/lib/session";
 import { useMyVisits, useQueueFlush } from "../hooks";
 import {
@@ -38,14 +37,12 @@ export function MyWeekScreen() {
   useQueueFlush();
 
   const { data, isPending, isError } = useMyVisits({ ...weekWindow(weekStart), pageSize: 100 });
-  const reminders = useReminderSchedule();
 
   const days = useMemo(() => visitsByDay(data?.visits ?? [], weekStart), [data, weekStart]);
   const stops = days[selected] ?? [];
   const routes = plannedDays(days);
 
   const partners = partnersOf(stops, user?.id);
-  const due = overdueReminders(reminders.data ?? []).length;
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-5 py-6">
@@ -65,19 +62,7 @@ export function MyWeekScreen() {
           </p>
         </div>
 
-        <Link
-          href="/notifications"
-          aria-label={due ? `Notifications, ${due} due` : "Notifications"}
-          className="relative flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-surface"
-        >
-          <Bell size={18} aria-hidden />
-          {due > 0 && (
-            <span
-              aria-hidden
-              className="absolute top-2 right-2 size-2 rounded-full bg-danger ring-2 ring-surface"
-            />
-          )}
-        </Link>
+        <NotificationsBell />
       </header>
 
       <PendingActionsBanner />

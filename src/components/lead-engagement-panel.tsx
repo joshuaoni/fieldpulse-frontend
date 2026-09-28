@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/errors";
 import { outcomeLabel } from "@/lib/outcomes";
-import { useLeadEngagement, useSyncChatwoot } from "../hooks";
+import { useLeadEngagement, useSyncChatwoot } from "@/features/leads/hooks";
 
 const SYNC_ERROR_MESSAGE: Record<string, string> = {
   SOURCE_NOT_CONFIGURED: "Chatwoot is not configured on this deployment yet.",

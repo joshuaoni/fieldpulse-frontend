@@ -2,12 +2,11 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Bell, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
+import { NotificationsBell } from "@/components/notifications-bell";
 import { Avatar } from "@/components/ui/member-avatars";
 import { LogUnplannedVisit } from "./log-unplanned-visit";
-import { useMyFieldRole } from "@/features/field-roles/hooks";
-import { useReminderSchedule } from "@/features/reminders/hooks";
-import { overdueReminders } from "@/features/reminders/types";
+import { useMyFieldRole } from "@/lib/field-role";
 import { useSession } from "@/lib/session";
 import { usePendingActions, useMyVisits, useQueueFlush } from "../hooks";
 import { myAttendance, type Visit } from "../types";
@@ -53,7 +52,6 @@ export function RepHomeScreen() {
 
   const window = useMemo(() => todayWindow(), []);
   const { data, isPending, isError } = useMyVisits({ ...window, pageSize: 100 });
-  const reminders = useReminderSchedule();
   const pending = usePendingActions();
 
   const visits = useMemo(
@@ -90,7 +88,6 @@ export function RepHomeScreen() {
     return filter === "VISITED" ? visited : !visited;
   });
 
-  const due = overdueReminders(reminders.data ?? []).length;
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-5 py-6">
@@ -106,19 +103,7 @@ export function RepHomeScreen() {
           </p>
         </div>
 
-        <Link
-          href="/notifications"
-          aria-label={due ? `Notifications, ${due} due` : "Notifications"}
-          className="relative flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-surface"
-        >
-          <Bell size={18} aria-hidden />
-          {due > 0 && (
-            <span
-              aria-hidden
-              className="absolute top-2 right-2 size-2 rounded-full bg-danger ring-2 ring-surface"
-            />
-          )}
-        </Link>
+        <NotificationsBell />
       </header>
 
       {pending > 0 && (

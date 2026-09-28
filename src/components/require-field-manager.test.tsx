@@ -25,7 +25,7 @@ const fieldRoleState: {
   isError: false,
   refetch: vi.fn(),
 };
-vi.mock("@/features/field-roles/hooks", () => ({
+vi.mock("@/lib/field-role", () => ({
   useMyFieldRole: () => fieldRoleState,
 }));
 

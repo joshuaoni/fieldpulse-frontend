@@ -16,8 +16,11 @@ vi.mock("../api", () => ({
 }));
 
 vi.mock("@/features/reminders/api", () => ({ fetchReminderSchedule: vi.fn(async () => []) }));
-vi.mock("@/features/field-roles/api", () => ({
-  fetchMyFieldRole: vi.fn(async () => ({ fieldRole: "FIELD_REP" })),
+// The hook rather than the fetch behind it: api and hook are one module now
+// that field roles live in lib/, so stubbing the call would leave the real
+// hook reaching for the real one.
+vi.mock("@/lib/field-role", () => ({
+  useMyFieldRole: () => ({ data: { fieldRole: "FIELD_REP" } }),
 }));
 
 vi.mock("@/lib/session", () => ({

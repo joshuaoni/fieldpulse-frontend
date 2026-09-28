@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type InputHTMLAttributes } from "react";
 import { useSession } from "@/lib/session";
-import { login } from "../api";
+import { login } from "@/features/auth/api";
 
 interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   id: string;

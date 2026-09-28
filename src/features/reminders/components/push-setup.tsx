@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { isProduction } from "@/lib/config";
 import { enablePush, pushAlreadyEnabled, pushIsSupported, type PushSetupResult } from "../push";
 
 /** Whether this looks like an iOS browser that has not been installed yet. */
@@ -22,7 +23,7 @@ const SETUP_MESSAGE: Record<PushSetupResult, string> = {
   denied: "Notifications are blocked. Turn them on in your browser settings for this site.",
   "not-configured": "Notifications are not set up on this deployment yet. Email still reaches you.",
   "no-worker":
-    process.env.NODE_ENV === "production"
+    isProduction
       ? "The background worker that receives notifications is not running. Reloading usually starts it."
       : "Notifications need the background worker, which `next dev` does not run. Try them against a build — `npm run build && npm start` — or on a deployed one. Email reaches you either way.",
   failed: "Could not turn notifications on. Email still reaches you.",

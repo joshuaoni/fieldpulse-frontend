@@ -5,6 +5,8 @@ function required(name: string, value: string | undefined): string {
   return value;
 }
 
+export const isProduction = process.env.NODE_ENV === "production";
+
 export const config = {
   apiBaseUrl: required(
     "NEXT_PUBLIC_FIELDPULSE_API_URL",

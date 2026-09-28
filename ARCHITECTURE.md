@@ -11,7 +11,7 @@ Next.js 16 (App Router) · React 19 · Tailwind 4 · TypeScript.
 
 1. **No login of its own.** Sign-in posts to the **ERP**; the token it issues is carried to FieldPulse. Two base URLs, never one.
 2. **Nothing calls `fetch` directly** except `lib/api-client.ts`.
-3. **Nothing reads `localStorage` directly** except `lib/token.ts`.
+3. **Nothing reads `localStorage` directly** except `lib/local-storage.ts`.
 4. **Nothing reads `process.env` directly** except `lib/config.ts`.
 5. **No colour literal in a component.** Every colour is a token from `globals.css`.
 6. **Offline is the default assumption**, not an error state.
@@ -43,8 +43,10 @@ src/
     ├── api-client.ts        # the only fetch wrapper
     ├── config.ts            # the only process.env reader
     ├── errors.ts            # ApiError
+    ├── field-role.ts        # which FieldPulse role the user holds
+    ├── local-storage.ts     # the only localStorage accessor
     ├── session.tsx          # session provider + useSession
-    └── token.ts             # the only localStorage accessor
+    └── token.ts             # the auth token, kept through local-storage
 ```
 
 Planned feature slices: `visits`, `leads`, `plans`, `reminders`.
@@ -60,7 +62,12 @@ Planned feature slices: `visits`, `leads`, `plans`, `reminders`.
 | Infrastructure every feature needs                           | `lib/`                    |
 
 **Features never import from each other.** If `visits` needs something from
-`leads`, that shared thing belongs in `lib/` or `components/`. 
+`leads`, that shared thing belongs in `lib/` or `components/`.
+
+**Composition slices are the one exception.** A slice whose whole job is to
+assemble a view of the others — `overview`, `notifications` — reads from the
+domain slices and is read by none of them, so it cannot be the start of a
+cycle. 
 
 **No barrel files** (`index.ts` re-exports). They defeat tree-shaking and
 create import cycles that only surface at build time.

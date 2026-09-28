@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { isProduction } from "@/lib/config";
 
 /**
  * Removes any worker controlling this origin, and everything it has cached.
@@ -18,7 +19,7 @@ export function ServiceWorkerRegistrar() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
-    if (process.env.NODE_ENV !== "production") {
+    if (!isProduction) {
       void evict().catch(() => {
         // Nothing to clean up, or the browser would not let us. 
       });

@@ -2,13 +2,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/errors";
-import { LeadEngagementPanel } from "./lead-engagement-panel";
-import type { LeadEngagement } from "../types";
+import { LeadEngagementPanel } from "@/components/lead-engagement-panel";
+import type { LeadEngagement } from "@/features/leads/types";
 
 const fetchLeadEngagement = vi.fn();
 const syncChatwoot = vi.fn();
 
-vi.mock("../api", () => ({
+vi.mock("@/features/leads/api", () => ({
   fetchLeadEngagement: (...args: unknown[]) => fetchLeadEngagement(...args),
   syncChatwoot: (...args: unknown[]) => syncChatwoot(...args),
 }));

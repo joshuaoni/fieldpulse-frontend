@@ -1,26 +1,15 @@
+import { read, remove, write } from "./local-storage";
+
 const TOKEN_KEY = "fieldpulse.token";
 
 export function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return window.localStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
+  return read(TOKEN_KEY);
 }
 
 export function setToken(token: string): void {
-  try {
-    window.localStorage.setItem(TOKEN_KEY, token);
-  } catch {
-    // Non-fatal: the session simply won't survive a reload.
-  }
+  write(TOKEN_KEY, token);
 }
 
 export function clearToken(): void {
-  try {
-    window.localStorage.removeItem(TOKEN_KEY);
-  } catch {
-    // ignore
-  }
+  remove(TOKEN_KEY);
 }

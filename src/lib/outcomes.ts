@@ -18,7 +18,7 @@ export const OUTCOMES = Object.keys(OUTCOME_LABEL) as VisitOutcome[];
 export const OUTCOME_TONE: Record<VisitOutcome, string> = {
   INTERESTED: "bg-success-bg text-success-fg",
   CLOSED: "bg-success-bg text-success-fg",
-  FOLLOW_UP_NEEDED: "bg-amber-500/10 text-amber-700",
+  FOLLOW_UP_NEEDED: "bg-warning/10 text-warning-fg",
   NOT_VIABLE: "bg-danger/10 text-danger",
   OTHER: "bg-sunken text-muted",
 };

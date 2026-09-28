@@ -5,7 +5,7 @@ import { ChevronRight } from "lucide-react";
 import { MemberAvatars } from "@/components/ui/member-avatars";
 import type { Visit } from "../types";
 import { STATUS_LABEL, STATUS_TONE, driveLabel, repStatus } from "../week";
-import { UnplannedBadge } from "./unplanned-badge";
+import { UnplannedBadge } from "@/components/unplanned-badge";
 
 export function RouteCard({
   visit,

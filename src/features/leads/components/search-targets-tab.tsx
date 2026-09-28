@@ -166,7 +166,7 @@ function TargetRow({ target, maxResults }: { target: SearchTarget; maxResults: n
 
       <td className="px-5 py-4 text-muted">
         {running ? (
-          <span className={`${BADGE} bg-blue-500/10 text-blue-700`}>
+          <span className={`${BADGE} bg-info/10 text-info-fg`}>
             Running{target.apifyRunStartedAt ? ` · ${ago(target.apifyRunStartedAt)}` : "…"}
           </span>
         ) : target.lastRunAt ? (
@@ -265,14 +265,14 @@ function RunTargetConfirm({
       </p>
 
       {target.lastRunCapped && (
-        <p className="mt-3 text-amber-700">
+        <p className="mt-3 text-warning-fg">
           The last run stopped at its cap, so this one would buy much the same list again.
           Narrowing the area, or raising the cap, gets you something new.
         </p>
       )}
 
       {target.lastRunNewLeads === 0 && !target.lastRunCapped && (
-        <p className="mt-3 text-amber-700">
+        <p className="mt-3 text-warning-fg">
           The last run found no new leads. This search has likely given everything Maps lists
           for it.
         </p>

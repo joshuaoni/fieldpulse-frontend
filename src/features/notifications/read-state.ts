@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
+import * as storage from "@/lib/local-storage";
 import type { FieldNotification } from "./types";
 
 export interface ReadState {
@@ -12,26 +13,18 @@ const KEY = "fieldpulse:notifications:read";
 const EMPTY: ReadState = { ids: [], before: 0 };
 
 function load(): ReadState {
-  try {
-    const held = window.localStorage.getItem(KEY);
-    if (!held) return EMPTY;
+  const held = storage.read(KEY);
+  if (!held) return EMPTY;
 
+  try {
     const parsed = JSON.parse(held) as Partial<ReadState>;
     return {
       ids: Array.isArray(parsed.ids) ? parsed.ids : [],
       before: typeof parsed.before === "number" ? parsed.before : 0,
     };
   } catch {
-    // Private browsing, cleared site data, or something else wrote the key.
+    // Something else wrote the key, or it was truncated.
     return EMPTY;
-  }
-}
-
-function save(state: ReadState): void {
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(state));
-  } catch {
-    // Read state is a convenience; losing it costs a blue dot, not a visit.
   }
 }
 
@@ -40,46 +33,47 @@ export const isRead = (state: ReadState, notification: FieldNotification): boole
 
 const listeners = new Set<() => void>();
 let snapshot: ReadState | null = null;
+let unsubscribe: (() => void) | null = null;
 
 function subscribe(listener: () => void): () => void {
-  const onStorage = (event: StorageEvent) => {
-    if (event.key !== null && event.key !== KEY) return;
-    snapshot = null;
-    for (const held of listeners) held();
-  };
+  if (!listeners.size) {
+    unsubscribe = storage.subscribe(KEY, () => {
+      snapshot = null;
+      for (const held of listeners) held();
+    });
+  }
 
-  if (!listeners.size) window.addEventListener("storage", onStorage);
   listeners.add(listener);
 
   return () => {
     listeners.delete(listener);
-    if (!listeners.size) window.removeEventListener("storage", onStorage);
+    if (!listeners.size) {
+      unsubscribe?.();
+      unsubscribe = null;
+    }
   };
 }
 
-const read = (): ReadState => (snapshot ??= load());
+const current = (): ReadState => (snapshot ??= load());
 
-const readOnServer = (): ReadState => EMPTY;
+const onServer = (): ReadState => EMPTY;
 
-function write(next: ReadState): void {
+function commit(next: ReadState): void {
   snapshot = next;
-  save(next);
+  storage.write(KEY, JSON.stringify(next));
   for (const listener of listeners) listener();
 }
 
 export function useReadState() {
-  const state = useSyncExternalStore(subscribe, read, readOnServer);
+  const state = useSyncExternalStore(subscribe, current, onServer);
 
   return {
     state,
-    markRead: useCallback(
-      (id: string) => {
-        const held = read();
-        if (held.ids.includes(id)) return;
-        write({ ...held, ids: [...held.ids, id] });
-      },
-      [],
-    ),
-    markAllRead: useCallback(() => write({ ids: [], before: Date.now() }), []),
+    markRead: useCallback((id: string) => {
+      const held = current();
+      if (held.ids.includes(id)) return;
+      commit({ ...held, ids: [...held.ids, id] });
+    }, []),
+    markAllRead: useCallback(() => commit({ ids: [], before: Date.now() }), []),
   };
 }

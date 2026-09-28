@@ -32,6 +32,18 @@
   --success-bg: #ecfaf2;
   --success-fg: #0c784a;
 
+  /* Needs attention, but is not a failure: pending check-ins, missed visits,
+     a follow-up owed, a scrape that hit its cap. */
+  --warning: oklch(76.9% 0.188 70.08);
+  --warning-fg: oklch(55.5% 0.163 48.998);
+
+  /* Something is happening now: a scrape running, a lead just in. */
+  --info: oklch(62.3% 0.214 259.815);
+  --info-fg: oklch(48.8% 0.243 264.376);
+
+  /* Carries a count rather than a state — the pairs figure on the overview. */
+  --accent: oklch(60.6% 0.25 292.717);
+
   --chip-bg: #f3f5f8;
   --chip-edge: #d2d9e4;
   --chip-active-bg: #edf4ff;
@@ -63,6 +75,11 @@
   --color-control-edge: var(--control-edge);
   --color-success-bg: var(--success-bg);
   --color-success-fg: var(--success-fg);
+  --color-warning: var(--warning);
+  --color-warning-fg: var(--warning-fg);
+  --color-info: var(--info);
+  --color-info-fg: var(--info-fg);
+  --color-accent: var(--accent);
   --color-chip-bg: var(--chip-bg);
   --color-chip-edge: var(--chip-edge);
   --color-chip-active-bg: var(--chip-active-bg);

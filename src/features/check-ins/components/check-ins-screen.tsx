@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { pairLabel } from "@/lib/pairs";
-import { UnplannedBadge } from "@/features/visits/components/unplanned-badge";
+import { UnplannedBadge } from "@/components/unplanned-badge";
 import { useCheckIns } from "../hooks";
 import { CheckInDetail } from "./check-in-detail";
 import {
@@ -165,7 +165,7 @@ function Tab({
 
 const BADGE: Record<CheckInStatus, string> = {
   FLAGGED: "bg-danger/10 text-danger",
-  PENDING: "bg-amber-500/10 text-amber-700",
+  PENDING: "bg-warning/10 text-warning-fg",
   VERIFIED: "bg-success-bg text-success-fg",
 };
 

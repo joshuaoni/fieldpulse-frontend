@@ -3,7 +3,7 @@
 import { Modal } from "@/components/ui/modal";
 import { OUTCOME_LABEL, type VisitOutcome } from "@/lib/outcomes";
 import { pairLabel } from "@/lib/pairs";
-import { DeviceTimeNote } from "@/features/visits/components/device-time-note";
+import { DeviceTimeNote } from "@/components/device-time-note";
 import {
   STATUS_LABEL,
   describeConcerns,
@@ -18,7 +18,7 @@ const NEUTRAL = "bg-sunken text-muted";
 
 const STATUS_BADGE: Record<CheckInStatus, string> = {
   FLAGGED: "bg-danger/10 text-danger",
-  PENDING: "bg-amber-500/10 text-amber-700",
+  PENDING: "bg-warning/10 text-warning-fg",
   VERIFIED: GOOD,
 };
 

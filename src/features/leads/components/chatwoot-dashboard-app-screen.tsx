@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LoginForm } from "@/features/auth/components/login-form";
+import { LoginForm } from "@/components/login-form";
 import { config } from "@/lib/config";
 import { ApiError } from "@/lib/errors";
 import { outcomeLabel } from "@/lib/outcomes";

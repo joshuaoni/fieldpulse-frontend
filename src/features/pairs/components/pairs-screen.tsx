@@ -177,7 +177,7 @@ function PairRow({ pair, onEdit }: { pair: SalesPair; onEdit: () => void }) {
             className={`inline-flex rounded-md px-2.5 py-1 text-xs/none font-medium ${
               progress.done === progress.total
                 ? "bg-success-bg text-success-fg"
-                : "bg-amber-500/10 text-amber-700"
+                : "bg-warning/10 text-warning-fg"
             }`}
           >
             {progress.done} of {progress.total}

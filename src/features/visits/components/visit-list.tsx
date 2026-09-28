@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { pairLabel } from "@/lib/pairs";
 import type { Visit } from "../types";
-import { UnplannedBadge } from "./unplanned-badge";
+import { UnplannedBadge } from "@/components/unplanned-badge";
 import { VisitStatusBadge } from "./visit-status-badge";
 
 const time = (iso: string | null) =>

@@ -171,11 +171,11 @@ describe("how a day's progress reads", () => {
       week: { done, total },
     });
 
-  it("is amber while the day is unfinished", async () => {
+  it("warns while the day is unfinished", async () => {
     show([withProgress(3, 5)]);
 
     const badge = await screen.findByText("3 of 5");
-    expect(badge.className).toContain("amber");
+    expect(badge.className).toContain("warning");
   });
 
   it("turns green once every call is done", async () => {
@@ -183,6 +183,6 @@ describe("how a day's progress reads", () => {
 
     const badge = await screen.findByText("5 of 5");
     expect(badge.className).toContain("success");
-    expect(badge.className).not.toContain("amber");
+    expect(badge.className).not.toContain("warning");
   });
 });

@@ -86,7 +86,7 @@ export const STATUS_LABEL: Record<VisitStatus, string> = {
 };
 
 export const STATUS_TONE: Record<VisitStatus, string> = {
-  PLANNED: "bg-amber-500/10 text-amber-700",
+  PLANNED: "bg-warning/10 text-warning-fg",
   CHECKED_IN: "bg-chip-active-bg text-chip-active-edge",
   COMPLETED: "bg-success-bg text-success-fg",
   MISSED: "bg-danger/10 text-danger",

@@ -21,7 +21,7 @@ export const ATTENTION_LABEL: Record<AttentionKind, string> = {
 
 export const ATTENTION_BADGE: Record<AttentionKind, string> = {
   FLAGGED: "bg-danger/10 text-danger",
-  MISSED: "bg-amber-500/10 text-amber-700",
+  MISSED: "bg-warning/10 text-warning-fg",
 };
 
 const fromCheckIn = (checkIn: CheckIn): AttentionItem => ({

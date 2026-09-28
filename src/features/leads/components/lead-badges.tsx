@@ -4,9 +4,9 @@ import { SOURCE_LABEL, type LeadSource, type LeadVisitState } from "../types";
 export const BADGE = "inline-flex rounded-md px-2.5 py-1 text-xs/none font-medium";
 
 const GOOD = "bg-success-bg text-success-fg";
-const WARN = "bg-amber-500/10 text-amber-700";
+const WARN = "bg-warning/10 text-warning-fg";
 const BAD = "bg-danger/10 text-danger";
-const LIVE = "bg-blue-500/10 text-blue-700";
+const LIVE = "bg-info/10 text-info-fg";
 const QUIET = "bg-sunken text-muted";
 
 const STATE: Record<LeadVisitState, { label: string; tone: string }> = {

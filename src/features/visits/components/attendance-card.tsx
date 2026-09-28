@@ -2,7 +2,7 @@ import Image from "next/image";
 import { outcomeLabel } from "@/lib/outcomes";
 import type { VisitAttendance } from "../types";
 import { arrivedAt, leftAt } from "../time";
-import { DeviceTimeNote } from "./device-time-note";
+import { DeviceTimeNote } from "@/components/device-time-note";
 
 const stamp = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : "—");
 

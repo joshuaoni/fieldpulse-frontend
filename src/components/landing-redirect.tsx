@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useMyFieldRole } from "@/features/field-roles/hooks";
+import { useMyFieldRole } from "@/lib/field-role";
 
 export function LandingRedirect() {
   const router = useRouter();

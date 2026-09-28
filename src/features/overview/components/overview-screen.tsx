@@ -77,7 +77,7 @@ export function OverviewScreen() {
         <StatCard
           label="Active pairs"
           value={pairs.data ? `${out.length} / ${roster.length}` : "—"}
-          icon={<Users size={30} aria-hidden className="shrink-0 text-violet-500" />}
+          icon={<Users size={30} aria-hidden className="shrink-0 text-accent" />}
         />
         <StatCard
           label="Visits today"
