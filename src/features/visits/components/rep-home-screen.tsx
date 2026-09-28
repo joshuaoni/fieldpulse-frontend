@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Bell } from "lucide-react";
+import { Bell, Plus } from "lucide-react";
 import { Avatar } from "@/components/ui/member-avatars";
+import { LogUnplannedVisit } from "./log-unplanned-visit";
 import { useMyFieldRole } from "@/features/field-roles/hooks";
 import { useReminderSchedule } from "@/features/reminders/hooks";
 import { overdueReminders } from "@/features/reminders/types";
@@ -43,6 +44,7 @@ export function RepHomeScreen() {
   const { user } = useSession();
   const fieldRole = useMyFieldRole();
   const [filter, setFilter] = useState<Filter>("ALL");
+  const [logging, setLogging] = useState(false);
 
 
   // Replays anything recorded offline as soon as this screen mounts, and
@@ -154,6 +156,15 @@ export function RepHomeScreen() {
         </Link>
       </div>
 
+      <button
+        type="button"
+        onClick={() => setLogging(true)}
+        className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong text-sm font-medium text-muted hover:bg-sunken"
+      >
+        <Plus size={16} aria-hidden />
+        Log a visit that is not planned
+      </button>
+
       <div className="mt-3 flex gap-2">
         {FILTERS.map(({ value, label }) => (
           <button
@@ -194,6 +205,7 @@ export function RepHomeScreen() {
         ))}
       </ul>
 
+      {logging && <LogUnplannedVisit onClose={() => setLogging(false)} />}
     </main>
   );
 }

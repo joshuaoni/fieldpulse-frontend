@@ -17,6 +17,7 @@ import {
   type Plan,
   type PlannedStop,
 } from "../types";
+import { AddStop } from "./add-stop";
 import { DayRoute } from "./day-route";
 
 function message(error: unknown): string {
@@ -175,6 +176,7 @@ export function PlanWeekGrid() {
                     otherPlans={plans.filter(
                       (other) => other.id !== plan.id && other.status !== "ARCHIVED",
                     )}
+                    weekStart={weekStart}
                     busy={busy}
                     onAdjust={(visitId, changes) =>
                       adjust.mutate({ planId: plan.id, visitId, ...changes })
@@ -202,6 +204,7 @@ function PlanRow({
   plan,
   otherPlans,
   office,
+  weekStart,
   busy,
   onAdjust,
   onRemove,
@@ -209,6 +212,7 @@ function PlanRow({
   plan: Plan;
   otherPlans: Plan[];
   office?: Office;
+  weekStart?: string;
   busy: boolean;
   onAdjust: (visitId: string, changes: { dayIndex?: number; targetPlanId?: string }) => void;
   onRemove: (visitId: string) => void;
@@ -222,6 +226,7 @@ function PlanRow({
 
   const [expanded, setExpanded] = useState(false);
   const [openDay, setOpenDay] = useState(0);
+  const [adding, setAdding] = useState(false);
 
   return (
     <>
@@ -274,7 +279,26 @@ function PlanRow({
               </p>
             )}
 
-            <DayTabs days={days} selected={openDay} onSelect={setOpenDay} />
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <DayTabs days={days} selected={openDay} onSelect={setOpenDay} />
+
+              {editable && (
+                <Button variant="outline" onClick={() => setAdding(true)} disabled={busy}>
+                  <Plus size={16} aria-hidden />
+                  Add stop
+                </Button>
+              )}
+            </div>
+
+            {adding && (
+              <AddStop
+                planId={plan.id}
+                pairName={name}
+                weekStart={weekStart}
+                defaultDayIndex={openDay}
+                onClose={() => setAdding(false)}
+              />
+            )}
 
             <DayRoute
               dayIndex={openDay}

@@ -1,5 +1,5 @@
 import { api } from "@/lib/api-client";
-import type { GenerateResult, Office, Plan } from "./types";
+import type { CandidateLead, GenerateResult, Office, Plan } from "./types";
 
 /**
  * Generation runs the clustering and route ordering server-side and can take
@@ -47,6 +47,25 @@ export async function adjustStop({ planId, visitId, ...changes }: AdjustStopInpu
     body: JSON.stringify(changes),
   });
   return plan;
+}
+
+export interface AddStopInput {
+  planId: string;
+  leadId: string;
+  dayIndex: number;
+}
+
+export async function addStop({ planId, ...stop }: AddStopInput): Promise<Plan> {
+  const { plan } = await api<{ plan: Plan }>(`/api/plans/${planId}/visits`, {
+    method: "POST",
+    body: JSON.stringify(stop),
+  });
+  return plan;
+}
+
+export async function fetchCandidateLeads(): Promise<CandidateLead[]> {
+  const { leads } = await api<{ leads: CandidateLead[] }>("/api/plans/candidate-leads");
+  return leads;
 }
 
 export async function removeStop(planId: string, visitId: string): Promise<Plan> {

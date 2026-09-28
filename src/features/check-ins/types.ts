@@ -22,6 +22,7 @@ export type CheckInConcern =
 export interface CheckIn {
   attendanceId: string;
   visitId: string;
+  planId: string | null;
   status: CheckInStatus;
   concerns: CheckInConcern[];
   pairId: string;

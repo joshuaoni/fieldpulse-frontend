@@ -5,6 +5,7 @@ import { ChevronRight } from "lucide-react";
 import { MemberAvatars } from "@/components/ui/member-avatars";
 import type { Visit } from "../types";
 import { STATUS_LABEL, STATUS_TONE, driveLabel, repStatus } from "../week";
+import { UnplannedBadge } from "./unplanned-badge";
 
 export function RouteCard({
   visit,
@@ -38,10 +39,13 @@ export function RouteCard({
 
           <span className="mt-1.5 flex items-start justify-between gap-3">
             <span className="min-w-0 truncate font-semibold">{visit.lead.companyName}</span>
-            <span
-              className={`shrink-0 rounded-md px-2 py-1 text-xs/none font-medium ${STATUS_TONE[status]}`}
-            >
-              {STATUS_LABEL[status]}
+            <span className="flex shrink-0 items-center gap-2">
+              <UnplannedBadge planId={visit.planId} />
+              <span
+                className={`inline-flex items-center rounded-md px-2 py-1 text-xs/none font-medium ${STATUS_TONE[status]}`}
+              >
+                {STATUS_LABEL[status]}
+              </span>
             </span>
           </span>
 

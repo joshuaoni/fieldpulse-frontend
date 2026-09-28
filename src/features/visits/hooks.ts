@@ -247,6 +247,17 @@ export function useQueueFlush() {
   }, [queryClient]);
 }
 
+export function useLogUnplannedVisit() {
+  const queryClient = useQueryClient();
+
+  return useMutation<Visit, Error, string>({
+    mutationFn: (leadId) => visitsApi.logUnplannedVisit(leadId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: visitKeys.all });
+    },
+  });
+}
+
 interface CheckInVariables {
   accuracyM?: number | null;
   visitId: string;

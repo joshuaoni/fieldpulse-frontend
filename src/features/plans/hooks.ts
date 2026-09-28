@@ -40,6 +40,17 @@ function useWeekMutation<TInput>(run: (input: TInput) => Promise<Plan>, weekStar
 export const useAdjustStop = (weekStart?: string) =>
   useWeekMutation(plansApi.adjustStop, weekStart);
 
+export const useAddStop = (weekStart?: string) => useWeekMutation(plansApi.addStop, weekStart);
+
+export function useCandidateLeads(enabled: boolean) {
+  return useQuery({
+    queryKey: ["plans", "candidate-leads"] as const,
+    queryFn: plansApi.fetchCandidateLeads,
+    enabled,
+    staleTime: 60_000,
+  });
+}
+
 export const useRemoveStop = (weekStart?: string) =>
   useWeekMutation(
     ({ planId, visitId }: { planId: string; visitId: string }) =>

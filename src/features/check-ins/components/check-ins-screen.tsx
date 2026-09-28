@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { pairLabel } from "@/lib/pairs";
+import { UnplannedBadge } from "@/features/visits/components/unplanned-badge";
 import { useCheckIns } from "../hooks";
 import { CheckInDetail } from "./check-in-detail";
 import {
@@ -18,10 +19,11 @@ function thisWeek(): { from: string; to: string } {
   monday.setUTCHours(0, 0, 0, 0);
   monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7));
 
-  const friday = new Date(monday);
-  friday.setUTCDate(friday.getUTCDate() + 4);
+  const sunday = new Date(monday);
+  sunday.setUTCDate(sunday.getUTCDate() + 6);
+  sunday.setUTCHours(23, 59, 59, 999);
 
-  return { from: monday.toISOString(), to: friday.toISOString() };
+  return { from: monday.toISOString(), to: sunday.toISOString() };
 }
 
 const rangeLabel = ({ from, to }: { from: string; to: string }) => {
@@ -34,6 +36,26 @@ const rangeLabel = ({ from, to }: { from: string; to: string }) => {
 
 const time = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+/**
+ * When the rep arrived, said in full.
+ */
+function arrival(iso: string): string {
+  const at = new Date(iso);
+
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+
+  const days = Math.floor((midnight.getTime() - at.getTime()) / 86_400_000) + 1;
+  const day =
+    days <= 0
+      ? "Today"
+      : days === 1
+        ? "Yesterday"
+        : at.toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" });
+
+  return `${day}, ${time(iso)}`;
+}
 
 export function CheckInsScreen() {
   const [range] = useState(thisWeek);
@@ -175,11 +197,14 @@ function CheckInRow({ checkIn, onOpen }: { checkIn: CheckIn; onOpen: () => void 
         )}
 
         <div className="min-w-0 flex-1">
-          <span
-            className={`inline-flex rounded-md px-2 py-1 text-xs/none font-medium ${BADGE[checkIn.status]}`}
-          >
-            {STATUS_LABEL[checkIn.status]}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`inline-flex items-center rounded-md px-2 py-1 text-xs/none font-medium ${BADGE[checkIn.status]}`}
+            >
+              {STATUS_LABEL[checkIn.status]}
+            </span>
+            <UnplannedBadge planId={checkIn.planId} />
+          </div>
 
           <p className="mt-2 truncate font-medium">
             {pairLabel(checkIn)}
@@ -188,7 +213,7 @@ function CheckInRow({ checkIn, onOpen }: { checkIn: CheckIn; onOpen: () => void 
 
           <p className="flex items-baseline gap-2 text-sm text-muted">
             <span className="truncate">{checkIn.lead.address ?? checkIn.lead.companyName}</span>
-            <span className="shrink-0 tabular-nums">{time(checkIn.checkInAt)}</span>
+            <span className="shrink-0 tabular-nums">{arrival(checkIn.checkInAt)}</span>
           </p>
 
           {detail && (

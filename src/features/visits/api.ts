@@ -29,6 +29,15 @@ export async function fetchVisit(id: string): Promise<Visit> {
   return visit;
 }
 
+export async function logUnplannedVisit(leadId: string): Promise<Visit> {
+  const { visit } = await api<{ visit: Visit }>("/api/visits/unplanned", {
+    method: "POST",
+    body: JSON.stringify({ leadId }),
+  });
+
+  return visit;
+}
+
 export interface CheckInPayload {
   visitId: string;
   lat: number;

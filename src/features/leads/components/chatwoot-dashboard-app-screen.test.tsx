@@ -20,8 +20,16 @@ vi.mock("@/lib/config", () => ({
 
 const sessionState = { status: "authenticated" as "loading" | "authenticated" | "anonymous" };
 vi.mock("@/lib/session", () => ({
-  useSession: () => ({ status: sessionState.status }),
+  useSession: () => ({ status: sessionState.status, refresh: vi.fn() }),
 }));
+
+// The sign-in form reaches for the router it would navigate with everywhere
+// but here, where the panel gives it somewhere else to go instead.
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+}));
+
+vi.mock("@/features/auth/api", () => ({ login: vi.fn() }));
 
 afterEach(() => {
   cleanup();
@@ -68,12 +76,35 @@ const engagement: LeadEngagement = {
 };
 
 describe("ChatwootDashboardAppScreen", () => {
-  it("prompts sign-in when there is no FieldPulse session", () => {
+  /**
+   * The panel signs the viewer in itself. A browser keeps a third-party
+   * frame's storage apart from the same site's own tab, so a session started
+   * in a FieldPulse tab is not one this frame can see — the old advice to
+   * sign in elsewhere and come back could never have worked.
+   */
+  it("offers to sign in here when there is no session in this frame", () => {
     sessionState.status = "anonymous";
 
     renderScreen();
 
-    expect(screen.getByText(/Sign in to FieldPulse in another browser tab/)).toBeTruthy();
+    expect(screen.getByText("Sign in to FieldPulse")).toBeTruthy();
+    expect(screen.getByLabelText("Work email")).toBeTruthy();
+  });
+
+  // A 401 clears the stored token, so asking before the session is known
+  // would sign the viewer out every time the panel loaded.
+  it("asks the server for nothing until it knows who is looking", () => {
+    sessionState.status = "anonymous";
+
+    renderScreen();
+    window.dispatchEvent(
+      new MessageEvent("message", {
+        origin: "https://app.chatwoot.com",
+        data: JSON.stringify({ event: "appContext", data: { contact: { id: 42 } } }),
+      }),
+    );
+
+    expect(fetchLeadEngagementByChatwootContact).not.toHaveBeenCalled();
   });
 
   it("waits for Chatwoot before fetching anything", () => {

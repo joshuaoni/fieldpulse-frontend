@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { pairLabel } from "@/lib/pairs";
 import type { Visit } from "../types";
+import { UnplannedBadge } from "./unplanned-badge";
 import { VisitStatusBadge } from "./visit-status-badge";
 
 const time = (iso: string | null) =>
@@ -52,6 +53,7 @@ export function VisitList({
                 {progress(visit)}
               </p>
             </div>
+            <UnplannedBadge planId={visit.planId} />
             <VisitStatusBadge status={visit.status} />
           </Link>
         </li>

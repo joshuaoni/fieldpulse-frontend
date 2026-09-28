@@ -33,6 +33,15 @@ const OUTCOME_BADGE: Record<VisitOutcome, string> = {
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
 
+const arrivedOn = (iso: string) =>
+  new Date(iso).toLocaleString([], {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
 export function CheckInDetail({ checkIn, onClose }: { checkIn: CheckIn; onClose: () => void }) {
   const { report } = checkIn;
 
@@ -71,10 +80,10 @@ export function CheckInDetail({ checkIn, onClose }: { checkIn: CheckIn; onClose:
         <img
           src={checkIn.photoUrl}
           alt={`Check-in photo taken at ${checkIn.lead.companyName}`}
-          className="aspect-[3/2] w-full rounded-xl object-cover"
+          className="aspect-3/2 w-full rounded-xl object-cover"
         />
       ) : (
-        <div className="flex aspect-[3/2] w-full items-center justify-center rounded-xl bg-sunken text-sm text-muted">
+        <div className="flex aspect-3/2 w-full items-center justify-center rounded-xl bg-sunken text-sm text-muted">
           No photo was taken
         </div>
       )}
@@ -94,7 +103,7 @@ export function CheckInDetail({ checkIn, onClose }: { checkIn: CheckIn; onClose:
         )}
 
         <p className="mt-1 text-sm text-muted">
-          Checked in by {checkIn.rep.firstName}
+          Checked in by {checkIn.rep.firstName} on {arrivedOn(checkIn.checkInAt)}
           {report && ` · written up by ${report.by.firstName}`}
         </p>
 

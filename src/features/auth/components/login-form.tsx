@@ -37,7 +37,17 @@ function Field({ id, label, icon, children, className = "", ...props }: FieldPro
   );
 }
 
-export function LoginForm({ className = "" }: { className?: string }) {
+/**
+ * @param onSignedIn Where to go afterwards. The default lands on the home
+ *   screen, which is right everywhere but the Chatwoot panel.
+ */
+export function LoginForm({
+  className = "",
+  onSignedIn,
+}: {
+  className?: string;
+  onSignedIn?: () => void;
+}) {
   const router = useRouter();
   const { refresh } = useSession();
   const [email, setEmail] = useState("");
@@ -53,7 +63,8 @@ export function LoginForm({ className = "" }: { className?: string }) {
     try {
       await login(email, password);
       await refresh();
-      router.replace("/");
+      if (onSignedIn) onSignedIn();
+      else router.replace("/");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Sign in failed");
       setSubmitting(false);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LoginForm } from "@/features/auth/components/login-form";
 import { config } from "@/lib/config";
 import { ApiError } from "@/lib/errors";
 import { outcomeLabel } from "@/lib/outcomes";
@@ -52,18 +53,12 @@ function useChatwootContactId(): string | null {
   return contactId;
 }
 
-function SignInPrompt() {
+function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
   return (
-    <div className="p-4 text-sm text-muted">
-      <p>Sign in to FieldPulse in another browser tab, then come back and refresh this tab.</p>
-      <a
-        href="/login"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-2 inline-block text-brand underline"
-      >
-        Open FieldPulse
-      </a>
+    <div className="p-4">
+      <h1 className="text-sm font-medium">Sign in to FieldPulse</h1>
+
+      <LoginForm className="mt-4" onSignedIn={onSignedIn} />
     </div>
   );
 }
@@ -74,17 +69,17 @@ const stamp = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString() 
  * Conversation-side view of the same lead's FieldPulse visit history.
  */
 export function ChatwootDashboardAppScreen() {
-  const { status } = useSession();
+  const { status, refresh } = useSession();
   const contactId = useChatwootContactId();
   const {
     data: engagement,
     isPending,
     isError,
     error,
-  } = useLeadEngagementByChatwootContact(contactId);
+  } = useLeadEngagementByChatwootContact(contactId, status === "authenticated");
 
   if (status === "loading") return <p className="p-4 text-sm text-muted">Loading…</p>;
-  if (status === "anonymous") return <SignInPrompt />;
+  if (status === "anonymous") return <SignIn onSignedIn={() => void refresh()} />;
 
   if (!contactId) {
     return <p className="p-4 text-sm text-muted">Waiting for Chatwoot…</p>;

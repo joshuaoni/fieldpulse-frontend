@@ -20,11 +20,11 @@ export function useLeadEngagement(leadId: string) {
   });
 }
 
-export function useLeadEngagementByChatwootContact(contactId: string | null) {
+export function useLeadEngagementByChatwootContact(contactId: string | null, signedIn: boolean) {
   return useQuery({
     queryKey: leadKeys.engagementByContact(contactId ?? ""),
     queryFn: () => leadsApi.fetchLeadEngagementByChatwootContact(contactId as string),
-    enabled: Boolean(contactId),
+    enabled: Boolean(contactId) && signedIn,
   });
 }
 

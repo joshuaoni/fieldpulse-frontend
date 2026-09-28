@@ -11,6 +11,7 @@ import { shownStatus } from "../week";
 import { AttendanceCard } from "./attendance-card";
 import { ReportSubmitted } from "./report-submitted";
 import { VisitActions } from "./visit-actions";
+import { UnplannedBadge } from "./unplanned-badge";
 import { VisitStatusBadge } from "./visit-status-badge";
 import { LeadEngagementPanel } from "@/features/leads/components/lead-engagement-panel";
 
@@ -54,7 +55,10 @@ export function VisitDetail({ visitId }: { visitId: string }) {
           <p className="mt-0.5 text-xs text-muted">{pairLabel(visit)}</p>
         </div>
 
-        <VisitStatusBadge status={shownStatus(visit, user?.id)} />
+        <div className="flex shrink-0 items-center gap-2">
+          <UnplannedBadge planId={visit.planId} />
+          <VisitStatusBadge status={shownStatus(visit, user?.id)} />
+        </div>
       </header>
 
       {/* A manager viewing someone else's visit gets no action panel. */}

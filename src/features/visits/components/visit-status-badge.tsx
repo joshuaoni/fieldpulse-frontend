@@ -16,7 +16,9 @@ const tone: Record<VisitStatus, string> = {
 
 export function VisitStatusBadge({ status }: { status: VisitStatus }) {
   return (
-    <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${tone[status]}`}>
+    <span
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${tone[status]}`}
+    >
       {label[status]}
     </span>
   );
