@@ -20,7 +20,8 @@ const allowedDevOrigins = [
     .filter(Boolean) ?? []),
 ];
 
-const chatwootOrigin = process.env.NEXT_PUBLIC_CHATWOOT_ORIGIN ?? "https://app.chatwoot.com";
+const chatwootOrigin =
+  process.env.NEXT_PUBLIC_CHATWOOT_ORIGIN?.trim() || "https://app.chatwoot.com";
 
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
