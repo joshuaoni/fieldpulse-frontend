@@ -52,7 +52,7 @@ describe("what needs a manager's attention", () => {
     expect(item.title).toBe("Tech Haven");
     expect(item.detail).toContain("Chinedu");
     expect(item.detail).toContain("1.4 km");
-    expect(item.href).toBe("/visits/visit-1");
+    expect(item.href).toBe("/visits?id=visit-1");
   });
 
   it("carries a flagged departure too, since the rules cover both ends", () => {

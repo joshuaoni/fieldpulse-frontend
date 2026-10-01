@@ -14,6 +14,7 @@ import { pairLabel } from "@/lib/pairs";
 import { useSession } from "@/lib/session";
 import { useCheckIns } from "@/features/check-ins/hooks";
 import { useTeamVisits } from "@/features/visits/hooks";
+import { visitHref } from "@/features/visits/href";
 import {
   ATTENTION_BADGE,
   ATTENTION_LABEL,
@@ -214,7 +215,7 @@ function ActiveRep({ pair }: { pair: SalesPair }) {
 
         <p className="mt-1 truncate text-sm">
           {pair.day.current ? (
-            <Link href={`/visits/${pair.day.current.visitId}`} className="hover:underline">
+            <Link href={visitHref(pair.day.current.visitId)} className="hover:underline">
               {pair.day.current.companyName}
             </Link>
           ) : (
@@ -262,7 +263,7 @@ function RecentReport({ report }: { report: FieldReport }) {
     <li className="flex items-center justify-between gap-3 px-5 py-4">
       <div className="min-w-0">
         <Link
-          href={`/visits/${report.visitId}`}
+          href={visitHref(report.visitId)}
           className="block truncate font-medium hover:underline"
         >
           {report.lead.companyName}

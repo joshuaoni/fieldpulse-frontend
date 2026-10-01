@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { MemberAvatars } from "@/components/ui/member-avatars";
 import type { Visit } from "../types";
+import { visitHref } from "../href";
 import { STATUS_LABEL, STATUS_TONE, driveLabel, repStatus } from "../week";
 import { UnplannedBadge } from "@/components/unplanned-badge";
 
@@ -23,7 +24,7 @@ export function RouteCard({
   return (
     <li>
       <Link
-        href={`/visits/${visit.id}`}
+        href={visitHref(visit.id)}
         className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-4 hover:bg-sunken"
       >
         <span className="min-w-0 flex-1">

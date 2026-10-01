@@ -17,6 +17,7 @@ import {
   useSubmitReport,
 } from "../hooks";
 import { myAttendance, type SubmittedReport, type Visit, type VisitAttendance } from "../types";
+import { visitHref } from "../href";
 import { CameraCapture } from "./camera-capture";
 
 function message(error: unknown): string {
@@ -534,7 +535,7 @@ function FinishThatFirst({ visit }: { visit: Visit }) {
       </p>
 
       <Link
-        href={`/visits/${visit.id}`}
+        href={visitHref(visit.id)}
         className="mt-4 flex h-12 w-full items-center justify-center rounded-full bg-sidebar-active-bg text-base font-medium text-sidebar-active-foreground"
       >
         Go to {visit.lead.companyName}

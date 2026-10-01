@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { pairLabel } from "@/lib/pairs";
 import type { Visit } from "../types";
+import { visitHref } from "../href";
 import { UnplannedBadge } from "@/components/unplanned-badge";
 import { VisitStatusBadge } from "./visit-status-badge";
 
@@ -43,7 +44,7 @@ export function VisitList({
       {visits.map((visit) => (
         <li key={visit.id}>
           <Link
-            href={`/visits/${visit.id}`}
+            href={visitHref(visit.id)}
             className="flex min-h-11 items-center gap-3 rounded-xl border border-border bg-surface p-4"
           >
             <div className="min-w-0 flex-1">

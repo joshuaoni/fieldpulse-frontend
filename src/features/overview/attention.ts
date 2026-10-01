@@ -1,5 +1,6 @@
 import { describeConcerns, type CheckIn } from "@/features/check-ins/types";
 import type { Visit } from "@/features/visits/types";
+import { visitHref } from "@/features/visits/href";
 import { pairLabel } from "@/lib/pairs";
 import type { SalesPair } from "@/features/pairs/types";
 
@@ -30,7 +31,7 @@ const fromCheckIn = (checkIn: CheckIn): AttentionItem => ({
   title: checkIn.lead.companyName,
   detail: `${checkIn.rep.firstName} — ${describeConcerns(checkIn)}`,
   at: checkIn.checkInAt,
-  href: `/visits/${checkIn.visitId}`,
+  href: visitHref(checkIn.visitId),
 });
 
 const fromVisit = (visit: Visit): AttentionItem => ({
@@ -39,7 +40,7 @@ const fromVisit = (visit: Visit): AttentionItem => ({
   title: visit.lead.companyName,
   detail: `${pairLabel(visit)} — nobody checked in`,
   at: visit.scheduledFor ?? visit.updatedAt,
-  href: `/visits/${visit.id}`,
+  href: visitHref(visit.id),
 });
 
 export function needsAttention({
