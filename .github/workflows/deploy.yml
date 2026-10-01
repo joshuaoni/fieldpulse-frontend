@@ -8,7 +8,7 @@ name: Deploy to AWS
 #            NEXT_PUBLIC_CHATWOOT_ORIGIN
 #   secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION,
 #            S3_BUCKET, CLOUDFRONT_ID
-# See deploy/README.md for the AWS side (bucket, distribution, headers).
+# See deploy/README.md for the AWS side (bucket, distribution, headers)..
 
 concurrency:
   group: deploy-${{ github.ref }}
