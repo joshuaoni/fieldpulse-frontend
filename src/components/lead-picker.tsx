@@ -19,38 +19,27 @@ export function LeadPicker({
   className?: string;
 }) {
   const [search, setSearch] = useState("");
-  const leads = useLeads({ search: search.trim() || undefined });
+  const leads = useLeads({ search: search || undefined });
 
   return (
     <div className={className}>
-      <label className="block text-sm font-medium" htmlFor={`${id}-search`}>
-        Find the lead
+      <label className="block text-sm font-medium" htmlFor={id}>
+        Lead
       </label>
-      <input
-        id={`${id}-search`}
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-        placeholder="Search by name"
-        className="mt-1.5 w-full rounded-lg border border-border bg-surface px-4 py-3 text-base outline-none placeholder:text-sidebar-section-label focus:border-chip-active-edge"
+      <Select
+        id={id}
+        value={value}
+        onChange={onChange}
+        placeholder={leads.isPending ? "Loading leads…" : "Choose a lead"}
+        onSearch={setSearch}
+        searchPlaceholder="Search by name or address"
+        options={(leads.data?.leads ?? []).map((lead) => ({
+          value: lead.id,
+          label: lead.companyName,
+          hint: lead.address ?? undefined,
+        }))}
+        className="mt-1.5"
       />
-
-      <div className="mt-4">
-        <label className="block text-sm font-medium" htmlFor={id}>
-          Lead
-        </label>
-        <Select
-          id={id}
-          value={value}
-          onChange={onChange}
-          placeholder={leads.isPending ? "Loading leads…" : "Choose a lead"}
-          options={(leads.data?.leads ?? []).map((lead) => ({
-            value: lead.id,
-            label: lead.companyName,
-            hint: lead.address ?? undefined,
-          }))}
-          className="mt-1.5"
-        />
-      </div>
 
       {leads.isError && (
         <p role="alert" className="mt-4 text-sm text-danger">

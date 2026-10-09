@@ -150,24 +150,29 @@ describe("assigning the reps in a pairing", () => {
     expect(createPair).toHaveBeenCalledWith({ userIds: ["u3"] });
   });
 
-  it("refuses the same rep in both seats rather than letting the API do it", async () => {
-    show(PAIR);
-
-    await choose("Member 2", /Chisom/);
-    fireEvent.click(screen.getByText("Save Pairing"));
-
-    expect(await screen.findByRole("alert")).toBeDefined();
-    expect(removePairMember).not.toHaveBeenCalled();
-    expect(addPairMember).not.toHaveBeenCalled();
-  });
-
-  // Hiding them would leave a manager wondering where someone went.
-  it("lists a rep who is already paired elsewhere, and says so", async () => {
+  /**
+   * A manager picking a partner is choosing among the people who can actually
+   * be chosen, so a rep who is spoken for is left out rather than listed as
+   * unavailable.
+   */
+  it("leaves out a rep who is already in another pair", async () => {
     show();
 
     fireEvent.click(await screen.findByLabelText("Member 1"));
-    const taken = await screen.findByRole("option", { name: /Chisom/ });
 
-    expect(taken.textContent).toContain("already paired");
+    await screen.findByRole("option", { name: /Zainab/ });
+    expect(screen.queryByRole("option", { name: /Chisom/ })).toBeNull();
+  });
+
+  it("leaves out the rep the other seat already holds", async () => {
+    show(PAIR);
+    await screen.findByLabelText("Member 1");
+
+    fireEvent.click(screen.getByLabelText("Member 2"));
+
+    // Member 1 holds Chisom, leaving this seat its own rep and the free one.
+    await screen.findByRole("option", { name: /Ademola/ });
+    await screen.findByRole("option", { name: /Zainab/ });
+    expect(screen.queryByRole("option", { name: /Chisom/ })).toBeNull();
   });
 });

@@ -79,3 +79,14 @@ export function useGeneratePlans(weekStart?: string) {
     },
   });
 }
+
+export function useClearWeek(weekStart: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => plansApi.clearWeek(weekStart),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: planKeys.week(weekStart) });
+    },
+  });
+}

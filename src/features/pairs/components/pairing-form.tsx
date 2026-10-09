@@ -6,13 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
 import { useAssignableReps, useSavePairing } from "../hooks";
-import {
-  PAIR_SIZE,
-  fullName,
-  openMembers,
-  type AssignableRep,
-  type SalesPair,
-} from "../types";
+import { PAIR_SIZE, fullName, openMembers, type AssignableRep, type SalesPair } from "../types";
 
 /**
  * Assigning the reps in a pairing.
@@ -27,7 +21,7 @@ export function PairingForm({ pair, onClose }: { pair?: SalesPair; onClose: () =
   const reps = useAssignableReps();
   const save = useSavePairing();
 
-  const options = useMemo(() => {
+  const available = useMemo(() => {
     const seated: AssignableRep[] = (pair ? openMembers(pair) : []).map((member) => ({
       ...member.user,
       fieldRole: "FIELD_REP",
@@ -37,7 +31,11 @@ export function PairingForm({ pair, onClose }: { pair?: SalesPair; onClose: () =
     const byId = new Map(seated.map((rep) => [rep.id, rep]));
     for (const rep of reps.data ?? []) byId.set(rep.id, rep);
 
-    return [...byId.values()].sort((a, b) => a.firstName.localeCompare(b.firstName));
+    const here = new Set(seated.map((rep) => rep.id));
+
+    return [...byId.values()]
+      .filter((rep) => here.has(rep.id) || !rep.pairId || rep.pairId === pair?.id)
+      .sort((a, b) => a.firstName.localeCompare(b.firstName));
   }, [pair, reps.data]);
 
   const chosen = seats.filter(Boolean);
@@ -96,11 +94,9 @@ export function PairingForm({ pair, onClose }: { pair?: SalesPair; onClose: () =
             value={seat}
             onChange={(chosen) => setSeat(index, chosen)}
             placeholder={reps.isPending ? "Loading reps…" : "Select a rep"}
-            options={options.map((rep) => ({
-              value: rep.id,
-              label: fullName(rep),
-              hint: rep.pairId && rep.pairId !== pair?.id ? "— already paired" : undefined,
-            }))}
+            options={available
+              .filter((rep) => rep.id === seat || !seats.includes(rep.id))
+              .map((rep) => ({ value: rep.id, label: fullName(rep) }))}
             className="mt-1.5"
           />
         </div>

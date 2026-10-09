@@ -1,12 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Pencil, Plus, Search } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
+  Plus,
+  Search,
+} from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MemberAvatars } from "@/components/ui/member-avatars";
 import { pairLabel } from "@/lib/pairs";
-import { usePairs } from "../hooks";
+import { usePairs, useSetPairActive } from "../hooks";
 import { matchesRep, openMembers, type SalesPair } from "../types";
 import { PairingForm } from "./pairing-form";
 
@@ -37,11 +46,14 @@ export function PairsScreen() {
   const [day, setDay] = useState(() => startOfDay(new Date()));
   const [term, setTerm] = useState("");
   const [editing, setEditing] = useState<Editing>(null);
+  const [retiring, setRetiring] = useState<SalesPair | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
+  const status = useSetPairActive();
 
   const today = startOfDay(new Date());
   const isToday = day.getTime() === today.getTime();
 
-  const { data: pairs, isPending, isError, error } = usePairs(asParam(day));
+  const { data: pairs, isPending, isError, error } = usePairs(asParam(day), showArchived);
 
   const shown = useMemo(
     () => (pairs ?? []).filter((pair) => matchesRep(pair, term)),
@@ -120,9 +132,6 @@ export function PairsScreen() {
                   Pairs
                 </th>
                 <th scope="col" className="px-5 py-3">
-                  Area
-                </th>
-                <th scope="col" className="px-5 py-3">
                   Current
                 </th>
                 <th scope="col" className="px-5 py-3">
@@ -136,7 +145,16 @@ export function PairsScreen() {
 
             <tbody className="divide-y divide-border">
               {shown.map((pair) => (
-                <PairRow key={pair.id} pair={pair} onEdit={() => setEditing({ pair })} />
+                <PairRow
+                  key={pair.id}
+                  pair={pair}
+                  onEdit={() => setEditing({ pair })}
+                  onRetire={() => {
+                    status.reset();
+                    setRetiring(pair);
+                  }}
+                  onRestore={() => status.mutate({ pairId: pair.id, isActive: true })}
+                />
               ))}
             </tbody>
           </table>
@@ -144,12 +162,49 @@ export function PairsScreen() {
       )}
 
       {editing && <PairingForm pair={editing.pair} onClose={() => setEditing(null)} />}
+
+      {retiring && (
+        <ConfirmDialog
+          title="Archive this pair?"
+          confirmLabel="Archive pair"
+          pendingLabel="Archiving…"
+          pending={status.isPending}
+          error={status.error?.message ?? null}
+          onClose={() => setRetiring(null)}
+          onConfirm={() =>
+            status.mutate(
+              { pairId: retiring.id, isActive: false },
+              { onSuccess: () => setRetiring(null) },
+            )
+          }
+        >
+          <p>
+            <span className="font-medium">
+              {pairLabel({ pairId: retiring.id, pair: retiring })}
+            </span>{" "}
+            drops off the roster and stops being planned for. Its weeks, visits and reports stay
+            where they are.
+          </p>
+          <p className="mt-3 text-muted">
+            The pair is disbanded, so both reps are free to be put in another one.
+          </p>
+        </ConfirmDialog>
+      )}
     </div>
   );
 }
 
-
-function PairRow({ pair, onEdit }: { pair: SalesPair; onEdit: () => void }) {
+function PairRow({
+  pair,
+  onEdit,
+  onRetire,
+  onRestore,
+}: {
+  pair: SalesPair;
+  onEdit: () => void;
+  onRetire: () => void;
+  onRestore: () => void;
+}) {
   const { current, progress, week } = pair.day;
   const users = openMembers(pair).map((member) => member.user);
   const label = pairLabel({ pairId: pair.id, pair });
@@ -162,10 +217,13 @@ function PairRow({ pair, onEdit }: { pair: SalesPair; onEdit: () => void }) {
         <span className="flex items-center gap-3">
           <MemberAvatars users={users} />
           <span className="font-medium">{label}</span>
+          {!pair.isActive && (
+            <span className="rounded-md bg-sunken px-2 py-0.5 text-xs/none font-medium text-muted">
+              Archived
+            </span>
+          )}
         </span>
       </td>
-
-      <td className="px-5 py-4 text-muted">{current?.address ?? "—"}</td>
 
       <td className="px-5 py-4 text-muted">
         {current?.companyName ?? (finished ? "Day complete" : "Not planned")}
@@ -194,14 +252,35 @@ function PairRow({ pair, onEdit }: { pair: SalesPair; onEdit: () => void }) {
       </td>
 
       <td className="px-5 py-4 text-right">
-        <button
-          type="button"
-          onClick={onEdit}
-          aria-label={`Edit ${label}`}
-          className="rounded-md p-1.5 text-muted hover:bg-sunken hover:text-foreground"
-        >
-          <Pencil size={16} aria-hidden />
-        </button>
+        <span className="inline-flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onEdit}
+            aria-label={`Edit ${label}`}
+            className="rounded-md p-1.5 text-muted hover:bg-sunken hover:text-foreground"
+          >
+            <Pencil size={16} aria-hidden />
+          </button>
+          {pair.isActive ? (
+            <button
+              type="button"
+              onClick={onRetire}
+              aria-label={`Archive ${label}`}
+              className="rounded-md p-1.5 text-muted hover:bg-sunken hover:text-danger"
+            >
+              <Archive size={16} aria-hidden />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onRestore}
+              aria-label={`Restore ${label}`}
+              className="rounded-md p-1.5 text-muted hover:bg-sunken hover:text-foreground"
+            >
+              <ArchiveRestore size={16} aria-hidden />
+            </button>
+          )}
+        </span>
       </td>
     </tr>
   );
