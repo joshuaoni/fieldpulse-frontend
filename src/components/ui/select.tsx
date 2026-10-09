@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
-import { Check, ChevronDown } from "lucide-react";
-import { placeDrop, type DropPlacement } from "./drop-placement";
+import { createPortal } from "react-dom";
+import { Check, ChevronDown, Search } from "lucide-react";
+import { anchorDrop, type DropAnchor } from "./drop-placement";
 
 export interface SelectOption {
   value: string;
@@ -10,6 +11,15 @@ export interface SelectOption {
   hint?: string;
   disabled?: boolean;
 }
+
+/**
+ * Past this many options, scrolling to find a name stops being reasonable and
+ * the panel grows a search field of its own.
+ */
+const SEARCH_FROM = 8;
+
+const matches = (option: SelectOption, term: string) =>
+  `${option.label} ${option.hint ?? ""}`.toLowerCase().includes(term);
 
 export function Select({
   id,
@@ -21,6 +31,9 @@ export function Select({
   size = "md",
   label,
   className = "",
+  searchable,
+  onSearch,
+  searchPlaceholder = "Search…",
 }: {
   id?: string;
   value: string;
@@ -31,17 +44,41 @@ export function Select({
   size?: "sm" | "md";
   label?: string;
   className?: string;
+  searchable?: boolean;
+  onSearch?: (term: string) => void;
+  searchPlaceholder?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [placement, setPlacement] = useState<DropPlacement>({ side: "below", maxHeight: 240 });
+  const [drop, setDrop] = useState<DropAnchor>({
+    side: "below",
+    maxHeight: 240,
+    left: 0,
+    width: 0,
+    top: 0,
+  });
+  const [term, setTerm] = useState("");
   const root = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const search = useRef<HTMLInputElement>(null);
   const listId = useId();
 
+  const searching = searchable ?? (Boolean(onSearch) || options.length > SEARCH_FROM);
+  const needle = term.trim().toLowerCase();
+  const shown =
+    !searching || onSearch || !needle ? options : options.filter((o) => matches(o, needle));
+
   const reveal = () => {
-    setPlacement(placeDrop(trigger.current));
+    setTerm("");
+    onSearch?.("");
+    setDrop(anchorDrop(trigger.current));
     setOpen(true);
+  };
+
+  const retype = (value: string) => {
+    setTerm(value);
+    onSearch?.(value.trim());
   };
 
   const chosen = options.find((option) => option.value === value);
@@ -50,7 +87,9 @@ export function Select({
     if (!open) return;
 
     const onPointerDown = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (root.current?.contains(target) || panel.current?.contains(target)) return;
+      setOpen(false);
     };
 
     document.addEventListener("pointerdown", onPointerDown);
@@ -60,10 +99,28 @@ export function Select({
   useEffect(() => {
     if (!open) return;
 
+    const follow = () => setDrop(anchorDrop(trigger.current));
+
+    window.addEventListener("scroll", follow, true);
+    window.addEventListener("resize", follow);
+    return () => {
+      window.removeEventListener("scroll", follow, true);
+      window.removeEventListener("resize", follow);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    if (searching) {
+      search.current?.focus();
+      return;
+    }
+
     const items = focusable(list.current);
     const at = items.findIndex((item) => item.dataset.value === value);
     (items[at] ?? items[0])?.focus();
-  }, [open, value]);
+  }, [open, value, searching]);
 
   const shut = () => {
     setOpen(false);
@@ -106,16 +163,31 @@ export function Select({
     }
 
     if (event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
-      const needle = event.key.toLowerCase();
+      if (searching) {
+        search.current?.focus();
+        return;
+      }
+
+      const typed = event.key.toLowerCase();
       const after = [...items.slice(at + 1), ...items.slice(0, at + 1)];
-      after.find((item) => item.textContent?.trim().toLowerCase().startsWith(needle))?.focus();
+      after.find((item) => item.textContent?.trim().toLowerCase().startsWith(typed))?.focus();
     }
   }
 
-  const box =
-    size === "sm"
-      ? "min-h-10 px-2 text-sm"
-      : "min-h-11 px-3 py-2.5 text-base";
+  function onSearchKeys(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      focusable(list.current)[0]?.focus();
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      shut();
+    }
+  }
+
+  const box = size === "sm" ? "min-h-10 px-2 text-sm" : "min-h-11 px-3 py-2.5 text-base";
 
   return (
     <div ref={root} className={`relative ${className}`}>
@@ -144,48 +216,82 @@ export function Select({
         <ChevronDown size={16} aria-hidden className="shrink-0 text-muted" />
       </button>
 
-      {open && (
-        <ul
-          ref={list}
-          id={listId}
-          role="listbox"
-          aria-label={label ?? placeholder}
-          data-side={placement.side}
-          onKeyDown={onListKeys}
-          style={{ maxHeight: placement.maxHeight }}
-          className={`absolute z-30 w-full overflow-auto rounded-lg border border-border bg-surface p-1 shadow-lg ${
-            placement.side === "above" ? "bottom-full mb-1" : "top-full mt-1"
-          }`}
-        >
-          {options.map((option) => {
-            const selected = option.value === value;
+      {open &&
+        createPortal(
+          <div
+            ref={panel}
+            data-side={drop.side}
+            style={{
+              position: "fixed",
+              left: drop.left,
+              width: drop.width,
+              top: drop.top,
+              bottom: drop.bottom,
+              zIndex: 60,
+            }}
+            className="overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
+          >
+            {searching && (
+              <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+                <Search size={15} aria-hidden className="shrink-0 text-muted" />
+                <input
+                  ref={search}
+                  type="text"
+                  value={term}
+                  onChange={(event) => retype(event.target.value)}
+                  onKeyDown={onSearchKeys}
+                  placeholder={searchPlaceholder}
+                  aria-label={`Search ${label ?? placeholder}`}
+                  autoComplete="off"
+                  className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
+                />
+              </div>
+            )}
 
-            return (
-              <li key={option.value}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={selected}
-                  data-value={option.value}
-                  disabled={option.disabled}
-                  onClick={() => choose(option)}
-                  className={`flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm outline-none hover:bg-sunken focus:bg-sunken disabled:opacity-50 ${
-                    selected ? "font-medium" : ""
-                  }`}
-                >
-                  <span className="min-w-0 truncate">
-                    {option.label}
-                    {option.hint && <span className="text-muted"> {option.hint}</span>}
-                  </span>
-                  {selected && <Check size={15} aria-hidden className="shrink-0" />}
-                </button>
-              </li>
-            );
-          })}
+            <ul
+              ref={list}
+              id={listId}
+              role="listbox"
+              aria-label={label ?? placeholder}
+              onKeyDown={onListKeys}
+              style={{ maxHeight: drop.maxHeight }}
+              className="overflow-auto p-1"
+            >
+              {shown.map((option) => {
+                const selected = option.value === value;
 
-          {options.length === 0 && <li className="px-3 py-2 text-sm text-muted">Nothing to choose from.</li>}
-        </ul>
-      )}
+                return (
+                  <li key={option.value}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={selected}
+                      data-value={option.value}
+                      disabled={option.disabled}
+                      onClick={() => choose(option)}
+                      className={`flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm outline-none hover:bg-sunken focus:bg-sunken disabled:opacity-50 ${
+                        selected ? "font-medium" : ""
+                      }`}
+                    >
+                      <span className="min-w-0 truncate">
+                        {option.label}
+                        {option.hint && <span className="text-muted"> {option.hint}</span>}
+                      </span>
+                      {selected && <Check size={15} aria-hidden className="shrink-0" />}
+                    </button>
+                  </li>
+                );
+              })}
+
+              {shown.length === 0 && (
+                <li className="px-3 py-2 text-sm text-muted">
+                  {needle ? "No matches." : "Nothing to choose from."}
+                </li>
+              )}
+            </ul>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

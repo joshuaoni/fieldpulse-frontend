@@ -6,14 +6,15 @@ import { openMembers, type AssignableRep, type SalesPair } from "./types";
 
 export const pairKeys = {
   all: () => ["sales-pairs"] as const,
-  list: (on?: string) => ["sales-pairs", "list", on ?? "today"] as const,
+  list: (on?: string, includeInactive = false) =>
+    ["sales-pairs", "list", on ?? "today", includeInactive] as const,
   assignable: () => ["sales-pairs", "assignable-reps"] as const,
 };
 
-export function usePairs(on?: string) {
+export function usePairs(on?: string, includeInactive = false) {
   return useQuery<SalesPair[]>({
-    queryKey: pairKeys.list(on),
-    queryFn: () => pairsApi.fetchPairs(on),
+    queryKey: pairKeys.list(on, includeInactive),
+    queryFn: () => pairsApi.fetchPairs(on, includeInactive),
     staleTime: 60_000,
   });
 }
@@ -51,6 +52,17 @@ export function useSavePairing() {
 
       return latest;
     },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: pairKeys.all() });
+    },
+  });
+}
+
+export function useSetPairActive() {
+  const queryClient = useQueryClient();
+
+  return useMutation<SalesPair, Error, { pairId: string; isActive: boolean }>({
+    mutationFn: ({ pairId, isActive }) => pairsApi.setPairActive(pairId, isActive),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: pairKeys.all() });
     },
