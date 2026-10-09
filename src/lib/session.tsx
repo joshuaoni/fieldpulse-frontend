@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { fetchMe, logout as clearSession } from "@/features/auth/api";
 import type { AuthUser } from "@/features/auth/types";
-import { isAllowedUser } from "./access";
+// import { isAllowedUser } from "./access";
 import { getToken } from "./token";
 
 type SessionStatus = "loading" | "authenticated" | "anonymous";
@@ -22,10 +22,10 @@ async function resolveSession(): Promise<AuthUser | null> {
   try {
     const user = await fetchMe();
 
-    if (!isAllowedUser(user.email)) {
-      clearSession();
-      return null;
-    }
+    // if (!isAllowedUser(user.email)) {
+    //   clearSession();
+    //   return null;
+    // }
 
     return user;
   } catch {

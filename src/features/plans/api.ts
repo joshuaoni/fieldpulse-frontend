@@ -89,3 +89,15 @@ export async function publishWeek(weekStart: string): Promise<Plan[]> {
   });
   return plans;
 }
+
+export interface ClearedWeek {
+  plans: number;
+  stops: number;
+}
+
+export async function clearWeek(weekStart: string): Promise<ClearedWeek> {
+  return api<ClearedWeek>("/api/plans/clear", {
+    method: "POST",
+    body: JSON.stringify({ weekStart }),
+  });
+}

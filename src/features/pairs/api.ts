@@ -1,9 +1,14 @@
 import { api } from "@/lib/api-client";
 import type { AssignableRep, SalesPair } from "./types";
 
-export async function fetchPairs(on?: string): Promise<SalesPair[]> {
+export async function fetchPairs(on?: string, includeInactive = false): Promise<SalesPair[]> {
+  const query = new URLSearchParams();
+  if (on) query.set("on", on);
+  if (includeInactive) query.set("includeInactive", "true");
+
+  const suffix = query.toString();
   const { salesPairs } = await api<{ salesPairs: SalesPair[] }>(
-    `/api/sales-pairs${on ? `?on=${on}` : ""}`,
+    `/api/sales-pairs${suffix ? `?${suffix}` : ""}`,
   );
   return salesPairs;
 }
@@ -36,6 +41,14 @@ export async function removePairMember(pairId: string, userId: string): Promise<
   const { salesPair } = await api<{ salesPair: SalesPair }>(
     `/api/sales-pairs/${pairId}/members/${userId}`,
     { method: "DELETE" },
+  );
+  return salesPair;
+}
+
+export async function setPairActive(pairId: string, isActive: boolean): Promise<SalesPair> {
+  const { salesPair } = await api<{ salesPair: SalesPair }>(
+    `/api/sales-pairs/${pairId}/status`,
+    { method: "PATCH", body: JSON.stringify({ isActive }) },
   );
   return salesPair;
 }

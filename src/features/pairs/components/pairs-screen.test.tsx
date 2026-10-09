@@ -5,6 +5,7 @@ import { PairsScreen } from "./pairs-screen";
 import type { SalesPair } from "../types";
 
 const fetchPairs = vi.fn();
+const setPairActive = vi.fn();
 
 vi.mock("../api", () => ({
   fetchPairs: (...args: unknown[]) => fetchPairs(...args),
@@ -12,6 +13,7 @@ vi.mock("../api", () => ({
   createPair: vi.fn(),
   addPairMember: vi.fn(),
   removePairMember: vi.fn(),
+  setPairActive: (...args: unknown[]) => setPairActive(...args),
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
@@ -68,7 +70,7 @@ describe("the day the roster describes", () => {
   it("opens on today and says so", async () => {
     show();
 
-    await waitFor(() => expect(fetchPairs).toHaveBeenCalledWith(today()));
+    await waitFor(() => expect(fetchPairs).toHaveBeenCalledWith(today(), false));
     expect(screen.getByText(/Today/)).toBeDefined();
   });
 
@@ -81,7 +83,7 @@ describe("the day the roster describes", () => {
     const yesterday = new Date();
     yesterday.setUTCDate(yesterday.getUTCDate() - 1);
     await waitFor(() =>
-      expect(fetchPairs).toHaveBeenCalledWith(yesterday.toISOString().slice(0, 10)),
+      expect(fetchPairs).toHaveBeenCalledWith(yesterday.toISOString().slice(0, 10), false),
     );
   });
 
@@ -184,5 +186,75 @@ describe("how a day's progress reads", () => {
     const badge = await screen.findByText("5 of 5");
     expect(badge.className).toContain("success");
     expect(badge.className).not.toContain("warning");
+  });
+});
+
+describe("a pair someone has been taken out of", () => {
+  // The membership row survives so old plans still read back with the pair
+  // that worked them — but the roster names who is in the pair now.
+  const departed = (): SalesPair => ({
+    ...onCall,
+    members: [
+      member("u1", "Chisom", "Ifechukwu"),
+      { ...member("u2", "Ademola", "Lekan"), endedAt: "2026-09-22T00:00:00.000Z" },
+    ],
+  });
+
+  it("stops naming the rep who left", async () => {
+    show([departed()]);
+
+    await screen.findByText("Chisom");
+    expect(screen.queryByText(/Ademola/)).toBeNull();
+  });
+
+  it("names both while both are still in it", async () => {
+    show([onCall]);
+
+    await screen.findByText("Chisom & Ademola");
+  });
+});
+
+/**
+ * Pairs are archived, never deleted: a visit and a plan both cascade from a
+ * pair, so deleting one would take its whole record of being out with it.
+ */
+describe("archiving a pair", () => {
+  const archiveButton = () => screen.getByLabelText("Archive Chisom & Ademola");
+
+  it("asks before archiving, and says the pair is disbanded", async () => {
+    show();
+    await screen.findByText("Chisom & Ademola");
+
+    fireEvent.click(archiveButton());
+
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain("Chisom & Ademola");
+    expect(dialog.textContent).toContain("free to be put in another one");
+    expect(setPairActive).not.toHaveBeenCalled();
+  });
+
+  it("archives it once that is confirmed", async () => {
+    setPairActive.mockResolvedValue(onCall);
+    show();
+    await screen.findByText("Chisom & Ademola");
+
+    fireEvent.click(archiveButton());
+    fireEvent.click(await screen.findByRole("button", { name: "Archive pair" }));
+
+    await waitFor(() => expect(setPairActive).toHaveBeenCalledWith("pair-1", false));
+  });
+
+  // An archived pair reads as archived, and offers the way back.
+  it("marks an archived pair and offers to restore it", async () => {
+    setPairActive.mockResolvedValue(onCall);
+    show([{ ...onCall, isActive: false }]);
+    await screen.findByText("Chisom & Ademola");
+
+    expect(screen.getByText("Archived")).toBeDefined();
+    expect(screen.queryByLabelText("Archive Chisom & Ademola")).toBeNull();
+
+    fireEvent.click(screen.getByLabelText("Restore Chisom & Ademola"));
+
+    await waitFor(() => expect(setPairActive).toHaveBeenCalledWith("pair-1", true));
   });
 });

@@ -1,4 +1,5 @@
 export interface PairMember {
+  endedAt?: string | null;
   user: { id: string; firstName: string; lastName: string; profileImageUrl?: string | null };
 }
 
@@ -11,7 +12,9 @@ export function pairLabel(record: HasPair): string {
   const name = record.pair?.name?.trim();
   if (name) return name;
 
-  const members = (record.pair?.members ?? []).map((member) => member.user.firstName.trim());
+  const members = (record.pair?.members ?? [])
+    .filter((member) => !member.endedAt)
+    .map((member) => member.user.firstName.trim());
   if (members.length) return members.join(" & ");
 
   return `Pair ${record.pairId.slice(0, 8)}`;

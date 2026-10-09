@@ -1,11 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Plus, RotateCw } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, RotateCw, Trash2 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MemberAvatars } from "@/components/ui/member-avatars";
-import { useAdjustStop, useGeneratePlans, usePlans, usePublishWeek, useRemoveStop } from "../hooks";
+import {
+  useAdjustStop,
+  useClearWeek,
+  useGeneratePlans,
+  usePlans,
+  usePublishWeek,
+  useRemoveStop,
+} from "../hooks";
 import {
   DAY_NAMES,
   dayDriveMinutes,
@@ -69,9 +77,13 @@ export function PlanWeekGrid() {
   const adjust = useAdjustStop(weekStart);
   const remove = useRemoveStop(weekStart);
   const publish = usePublishWeek(weekStart);
+  const clear = useClearWeek(weekStart);
+  const [clearing, setClearing] = useState(false);
 
-  const busy = adjust.isPending || remove.isPending || publish.isPending;
-  const draftCount = (plans ?? []).filter((plan) => plan.status === "DRAFT").length;
+  const busy = adjust.isPending || remove.isPending || publish.isPending || clear.isPending;
+  const drafts = (plans ?? []).filter((plan) => plan.status === "DRAFT");
+  const draftCount = drafts.length;
+  const draftStops = drafts.reduce((sum, plan) => sum + plan.visits.length, 0);
   const anyPublished = activePlans.some((plan) => plan.status === "PUBLISHED");
   const totalLeads = activePlans.reduce((sum, plan) => sum + plan.visits.length, 0);
   const failure =
@@ -103,6 +115,14 @@ export function PlanWeekGrid() {
           >
             <RotateCw size={18} aria-hidden />
             {generate.isPending ? "Planning…" : "Regenerate"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setClearing(true)}
+            disabled={busy || generate.isPending || draftCount === 0}
+          >
+            <Trash2 size={18} aria-hidden />
+            Clear week
           </Button>
           <Button
             variant="dark"
@@ -138,6 +158,34 @@ export function PlanWeekGrid() {
       )}
 
       {isPending && <p className="text-sm text-muted">Loading the week…</p>}
+
+      {clearing && (
+        <ConfirmDialog
+          title="Clear this week?"
+          confirmLabel="Clear week"
+          pendingLabel="Clearing…"
+          pending={clear.isPending}
+          error={clear.error ? message(clear.error) : null}
+          onClose={() => setClearing(false)}
+          onConfirm={() =>
+            clear.mutate(undefined, {
+              onSuccess: () => setClearing(false),
+            })
+          }
+        >
+          <p>
+            This deletes {draftCount === 1 ? "the draft" : `all ${draftCount} drafts`} for{" "}
+            {formatWeekRange(weekStart)} along with {draftStops === 1 ? "its" : "their"}{" "}
+            {draftStops} planned {draftStops === 1 ? "stop" : "stops"}, leaving the week empty.
+            Regenerating afterwards starts from nothing.
+          </p>
+          {anyPublished && (
+            <p className="mt-3 text-muted">
+              Any plan already published stays — reps are working from those.
+            </p>
+          )}
+        </ConfirmDialog>
+      )}
 
       {plans && plans.length === 0 && (
         <p className="rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
