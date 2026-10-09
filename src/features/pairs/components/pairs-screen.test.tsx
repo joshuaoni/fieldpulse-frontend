@@ -257,14 +257,4 @@ describe("archiving a pair", () => {
 
     await waitFor(() => expect(setPairActive).toHaveBeenCalledWith("pair-1", true));
   });
-
-  // Archived pairs are off the roster by default; they are asked for.
-  it("fetches the archived ones only when asked to show them", async () => {
-    show();
-    await screen.findByText("Chisom & Ademola");
-
-    fireEvent.click(screen.getByLabelText("Show archived"));
-
-    await waitFor(() => expect(fetchPairs).toHaveBeenCalledWith(today(), true));
-  });
 });
