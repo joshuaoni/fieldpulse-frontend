@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/brand-mark";
 import { LoginForm } from "@/components/login-form";
 
 export const metadata = { title: "Sign in — FieldPulse" };
@@ -6,11 +7,8 @@ export default function LoginPage() {
   return (
     <main className="flex flex-1 flex-col justify-center bg-background px-6 py-12 text-foreground">
       <div className="mx-auto w-full max-w-sm">
-        <div className="flex items-start justify-center gap-1">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/meta4-logo.svg" alt="Meta4" className="h-10 w-auto" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/444.svg" alt="" aria-hidden className="-mt-2 h-12 w-auto" />
+        <div className="flex justify-center">
+          <BrandMark className="size-24" />
         </div>
 
         <h1 className="mt-20 text-center text-[26px] font-bold tracking-tight">

@@ -10,7 +10,7 @@
  * every cache not named by the current version, which is what clears a stale
  * one off a machine that already has it.
  */
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 const SHELL_CACHE = `fieldpulse-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `fieldpulse-runtime-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";
