@@ -26,6 +26,7 @@ import {
   type PlannedStop,
 } from "../types";
 import { AddStop } from "./add-stop";
+import { DayActions } from "./day-actions";
 import { DayRoute } from "./day-route";
 
 function message(error: unknown): string {
@@ -114,7 +115,7 @@ export function PlanWeekGrid() {
             disabled={generate.isPending || busy}
           >
             <RotateCw size={18} aria-hidden />
-            {generate.isPending ? "Planning…" : "Regenerate"}
+            {generate.isPending ? "Planning…" : activePlans.length ? "Regenerate" : "Generate"}
           </Button>
           <Button
             variant="outline"
@@ -177,7 +178,7 @@ export function PlanWeekGrid() {
             This deletes {draftCount === 1 ? "the draft" : `all ${draftCount} drafts`} for{" "}
             {formatWeekRange(weekStart)} along with {draftStops === 1 ? "its" : "their"}{" "}
             {draftStops} planned {draftStops === 1 ? "stop" : "stops"}, leaving the week empty.
-            Regenerating afterwards starts from nothing.
+            Generating afterwards starts from nothing.
           </p>
           {anyPublished && (
             <p className="mt-3 text-muted">
@@ -189,7 +190,7 @@ export function PlanWeekGrid() {
 
       {plans && plans.length === 0 && (
         <p className="rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
-          No plans for this week yet. Regenerate to propose one per pair.
+          No plans for this week yet. Generate to propose one per pair.
         </p>
       )}
 
@@ -331,10 +332,19 @@ function PlanRow({
               <DayTabs days={days} selected={openDay} onSelect={setOpenDay} />
 
               {editable && (
-                <Button variant="outline" onClick={() => setAdding(true)} disabled={busy}>
-                  <Plus size={16} aria-hidden />
-                  Add stop
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <DayActions
+                    plan={plan}
+                    days={days}
+                    dayIndex={openDay}
+                    weekStart={weekStart}
+                    busy={busy}
+                  />
+                  <Button variant="outline" onClick={() => setAdding(true)} disabled={busy}>
+                    <Plus size={16} aria-hidden />
+                    Add stop
+                  </Button>
+                </div>
               )}
             </div>
 

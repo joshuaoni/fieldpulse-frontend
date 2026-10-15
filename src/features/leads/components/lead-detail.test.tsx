@@ -43,11 +43,12 @@ const lead: Lead = {
   fieldSources: [
     { fieldName: "phone", source: "SPREADSHEET_SEED", fetchedAt: "2026-09-20T00:00:00.000Z" },
   ],
+  searchTarget: null,
   lastVisit: null,
   isNew: false,
 };
 
-function show(engagement: Partial<LeadEngagement> = {}) {
+function show(engagement: Partial<LeadEngagement> = {}, shown: Lead = lead) {
   fetchLeadEngagement.mockResolvedValue({
     leadId: "lead-1",
     chatwootContactId: null,
@@ -59,7 +60,7 @@ function show(engagement: Partial<LeadEngagement> = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <LeadDetail lead={lead} onClose={vi.fn()} />
+      <LeadDetail lead={shown} onClose={vi.fn()} />
     </QueryClientProvider>,
   );
 }
@@ -143,5 +144,23 @@ describe("a lead's visit history", () => {
     show();
 
     expect(await screen.findByText(/No Chatwoot contact yet/)).toBeDefined();
+  });
+});
+
+// The table cuts a long search target to one line; this is where it is read in full.
+describe("where a lead came from", () => {
+  it("names the whole search target that found it", async () => {
+    const long = "building materials suppliers and hardware wholesalers with delivery";
+    show({}, { ...lead, searchTarget: { id: "t1", query: long, area: "Ikeja, Lagos" } });
+
+    expect((await screen.findByText(/Found by/)).closest("section")?.textContent).toContain(
+      `${long} in Ikeja, Lagos`,
+    );
+  });
+
+  it("says nothing for a lead no search found", () => {
+    show();
+
+    expect(screen.queryByText("Found by")).toBeNull();
   });
 });

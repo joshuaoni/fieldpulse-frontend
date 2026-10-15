@@ -101,3 +101,34 @@ export async function clearWeek(weekStart: string): Promise<ClearedWeek> {
     body: JSON.stringify({ weekStart }),
   });
 }
+
+/** Empties one day of a pair's plan. `dayIndex` 0 is the week's Monday. */
+export async function clearDay({
+  planId,
+  dayIndex,
+}: {
+  planId: string;
+  dayIndex: number;
+}): Promise<Plan> {
+  const { plan } = await api<{ plan: Plan }>(`/api/plans/${planId}/days/${dayIndex}`, {
+    method: "DELETE",
+  });
+  return plan;
+}
+
+/** Trades two days of a pair's plan, each keeping its route. */
+export async function swapDays({
+  planId,
+  from,
+  to,
+}: {
+  planId: string;
+  from: number;
+  to: number;
+}): Promise<Plan> {
+  const { plan } = await api<{ plan: Plan }>(`/api/plans/${planId}/days/swap`, {
+    method: "POST",
+    body: JSON.stringify({ from, to }),
+  });
+  return plan;
+}

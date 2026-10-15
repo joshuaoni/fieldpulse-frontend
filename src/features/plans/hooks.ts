@@ -42,6 +42,10 @@ export const useAdjustStop = (weekStart?: string) =>
 
 export const useAddStop = (weekStart?: string) => useWeekMutation(plansApi.addStop, weekStart);
 
+export const useClearDay = (weekStart?: string) => useWeekMutation(plansApi.clearDay, weekStart);
+
+export const useSwapDays = (weekStart?: string) => useWeekMutation(plansApi.swapDays, weekStart);
+
 export function useCandidateLeads(enabled: boolean) {
   return useQuery({
     queryKey: ["plans", "candidate-leads"] as const,

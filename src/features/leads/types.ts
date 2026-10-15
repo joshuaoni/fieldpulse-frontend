@@ -41,12 +41,7 @@ export interface LeadFieldSource {
 }
 
 export type LeadVisitState =
-  | VisitOutcome
-  | "FLAGGED"
-  | "IN_PROGRESS"
-  | "PLANNED"
-  | "AWAITING_REPORT"
-  | "MISSED";
+  VisitOutcome | "FLAGGED" | "IN_PROGRESS" | "PLANNED" | "AWAITING_REPORT" | "MISSED";
 
 export interface LeadLastVisit {
   visitId: string;
@@ -71,6 +66,7 @@ export interface Lead {
   isActive: boolean;
   createdAt: string;
   fieldSources: LeadFieldSource[];
+  searchTarget: { id: string; query: string; area: string } | null;
   lastVisit: LeadLastVisit | null;
   isNew: boolean;
 }
@@ -127,6 +123,22 @@ export interface DiscoveryTick {
   collected?: { targetId: string; summary: PassSummary; retired: boolean };
   started?: DiscoveryStarted;
   waitingOn?: string;
+}
+
+export interface EnrichmentRun {
+  runId: string;
+  startedAt: string;
+  total: number;
+}
+
+export interface EnrichmentStatus {
+  current: (EnrichmentRun & { processed: number }) | null;
+  last: {
+    runId: string;
+    endedAt: string;
+    summary: PassSummary | null;
+    error: string | null;
+  } | null;
 }
 
 export interface EnrichmentPreview {

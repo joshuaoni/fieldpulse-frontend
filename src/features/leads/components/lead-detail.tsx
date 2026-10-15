@@ -29,9 +29,7 @@ export function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void 
       header={
         <div className="min-w-0">
           <h2 className="truncate text-lg font-semibold tracking-tight">{lead.companyName}</h2>
-          {lead.address && (
-            <p className="mt-0.5 truncate text-sm text-muted">{lead.address}</p>
-          )}
+          {lead.address && <p className="mt-0.5 truncate text-sm text-muted">{lead.address}</p>}
         </div>
       }
     >
@@ -41,6 +39,17 @@ export function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void 
           <SourceChips sources={sourcesOf(lead)} />
         </div>
       </section>
+
+      {lead.searchTarget && (
+        <section className="mt-6">
+          <h3 className="font-semibold">Found by</h3>
+          <p className="mt-2 text-sm wrap-break-word">
+            {lead.searchTarget.query}
+            <span className="text-muted"> in </span>
+            {lead.searchTarget.area}
+          </p>
+        </section>
+      )}
 
       <Engagement lead={lead} />
 

@@ -4,13 +4,13 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { NotificationsBell } from "@/components/notifications-bell";
-import { Avatar } from "@/components/ui/member-avatars";
 import { LogUnplannedVisit } from "./log-unplanned-visit";
 import { useMyFieldRole } from "@/lib/field-role";
 import { useSession } from "@/lib/session";
 import { usePendingActions, useMyVisits, useQueueFlush } from "../hooks";
 import { myAttendance, type Visit } from "../types";
 import { repStatus } from "../week";
+import { RepAccountMenu } from "./rep-account-menu";
 import { RouteCard } from "./route-card";
 
 const ROLE_LABEL: Record<string, string> = {
@@ -44,7 +44,6 @@ export function RepHomeScreen() {
   const fieldRole = useMyFieldRole();
   const [filter, setFilter] = useState<Filter>("ALL");
   const [logging, setLogging] = useState(false);
-
 
   // Replays anything recorded offline as soon as this screen mounts, and
   // again whenever the connection returns.
@@ -88,20 +87,13 @@ export function RepHomeScreen() {
     return filter === "VISITED" ? visited : !visited;
   });
 
-
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-5 py-6">
       <header className="flex items-center gap-3">
-        {user && <Avatar user={user} className="size-11" />}
-
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">
-            {user ? `${user.firstName} ${user.lastName}` : ""}
-          </p>
-          <p className="truncate text-sm text-muted">
-            {ROLE_LABEL[fieldRole.data?.fieldRole ?? ""] ?? "Field"}
-          </p>
-        </div>
+        <RepAccountMenu
+          roleLabel={ROLE_LABEL[fieldRole.data?.fieldRole ?? ""] ?? "Field"}
+          pending={pending}
+        />
 
         <NotificationsBell />
       </header>
@@ -178,9 +170,7 @@ export function RepHomeScreen() {
 
       {data && shown.length === 0 && (
         <p className="mt-4 rounded-2xl border border-dashed border-border-strong p-6 text-center text-sm text-muted">
-          {visits.length === 0
-            ? "Nothing planned for today."
-            : "Nothing here under that filter."}
+          {visits.length === 0 ? "Nothing planned for today." : "Nothing here under that filter."}
         </p>
       )}
 
@@ -228,9 +218,7 @@ function FocusCard({ visit, live }: { visit: Visit | null; live: boolean }) {
       <div className="mt-4 flex items-end justify-between gap-4">
         <div className="min-w-0">
           <p className="truncate font-semibold">{visit.lead.companyName}</p>
-          {visit.lead.address && (
-            <p className="mt-0.5 text-sm opacity-70">{visit.lead.address}</p>
-          )}
+          {visit.lead.address && <p className="mt-0.5 text-sm opacity-70">{visit.lead.address}</p>}
         </div>
 
         <Link

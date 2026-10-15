@@ -9,6 +9,7 @@ const fetchSearchTargets = vi.fn();
 const runSearchTarget = vi.fn();
 const runEnrichment = vi.fn();
 const previewEnrichment = vi.fn();
+const fetchEnrichmentStatus = vi.fn();
 const collectDiscovery = vi.fn();
 
 vi.mock("../api", () => ({
@@ -17,6 +18,7 @@ vi.mock("../api", () => ({
   runSearchTarget: (...args: unknown[]) => runSearchTarget(...args),
   runEnrichment: () => runEnrichment(),
   previewEnrichment: () => previewEnrichment(),
+  fetchEnrichmentStatus: () => fetchEnrichmentStatus(),
   collectDiscovery: () => collectDiscovery(),
   createSearchTarget: vi.fn(),
   setSearchTargetActive: vi.fn(),
@@ -56,6 +58,7 @@ const lead = (overrides: Partial<Lead> = {}): Lead => ({
     { fieldName: "email", source: "APOLLO", fetchedAt: "2026-09-21T00:00:00.000Z" },
     { fieldName: "website", source: "APOLLO", fetchedAt: "2026-09-21T00:00:00.000Z" },
   ],
+  searchTarget: null,
   lastVisit: {
     visitId: "visit-1",
     visitedAt: "2026-09-23T13:15:00.000Z",
@@ -95,8 +98,11 @@ const target = (overrides: Partial<SearchTarget> = {}): SearchTarget => ({
   ...overrides,
 });
 
+const IDLE = { current: null, last: null };
+
 beforeEach(() => {
   previewEnrichment.mockResolvedValue({ candidates: 14, configured: true });
+  fetchEnrichmentStatus.mockResolvedValue(IDLE);
 });
 
 function show(leadPage = page(), targets: SearchTarget[] = [target()]) {
@@ -112,6 +118,32 @@ function show(leadPage = page(), targets: SearchTarget[] = [target()]) {
 }
 
 describe("the leads table", () => {
+  // Each lead names the search that first found it.
+  it("shows the search target a lead came from", async () => {
+    show(
+      page({
+        leads: [
+          lead({
+            id: "l1",
+            companyName: "Found Ltd",
+            searchTarget: { id: "t1", query: "paint shops", area: "Yaba, Lagos" },
+          }),
+          lead({ id: "l2", companyName: "Seeded Ltd", searchTarget: null }),
+        ],
+      }),
+    );
+
+    const found = (await screen.findByText("Found Ltd")).closest("tr") as HTMLElement;
+    expect(found.textContent).toContain("paint shops");
+    expect(found.textContent).toContain("Yaba, Lagos");
+
+    // Cut to one line in the table, so the whole of it is offered on hover.
+    expect(found.querySelector("[title]")?.getAttribute("title")).toBe("paint shops — Yaba, Lagos");
+
+    const seeded = screen.getByText("Seeded Ltd").closest("tr") as HTMLElement;
+    expect(seeded.textContent).not.toContain("paint shops");
+  });
+
   it("says when the pipeline last ran and what it brought in", async () => {
     show();
 
@@ -353,8 +385,12 @@ describe("before anything is paid for", () => {
     expect(screen.getByRole("dialog").textContent).toContain("Each lookup is billed");
   });
 
-  it("enriches once confirmed", async () => {
-    runEnrichment.mockResolvedValue({ considered: 14, created: 0, updated: 3 });
+  it("starts a run once confirmed", async () => {
+    runEnrichment.mockResolvedValue({
+      runId: "run-1",
+      startedAt: new Date().toISOString(),
+      total: 14,
+    });
     show();
 
     fireEvent.click(await screen.findByText("Run enrichment"));
@@ -362,6 +398,93 @@ describe("before anything is paid for", () => {
     fireEvent.click(confirmButton());
 
     await waitFor(() => expect(runEnrichment).toHaveBeenCalled());
+  });
+
+  /** A run started here, and over by the next reading of the status. */
+  function finishesAs(last: { summary?: object; error?: string }) {
+    runEnrichment.mockResolvedValue({
+      runId: "run-1",
+      startedAt: new Date().toISOString(),
+      total: 14,
+    });
+    fetchEnrichmentStatus.mockResolvedValueOnce(IDLE).mockResolvedValue({
+      current: null,
+      last: {
+        runId: "run-1",
+        endedAt: new Date().toISOString(),
+        summary: last.summary ?? null,
+        error: last.error ?? null,
+      },
+    });
+  }
+
+  async function runIt() {
+    show();
+    fireEvent.click(await screen.findByText("Run enrichment"));
+    await screen.findByText(/14 leads/);
+    fireEvent.click(confirmButton());
+  }
+
+  // The run carries on on the server; the page follows it and reports the end.
+  it("says when it has finished, and what it found", async () => {
+    finishesAs({ summary: { considered: 14, created: 0, updated: 3, skipped: 10, failed: 1 } });
+    await runIt();
+
+    const done = await screen.findByRole("dialog", { name: "Enrichment complete" });
+    expect(done.textContent).toContain("Looked up 14 leads");
+    expect(done.textContent).toMatch(/Updated with new details\s*3/);
+    expect(done.textContent).toMatch(/No new details found\s*10/);
+    expect(done.textContent).toMatch(/Failed\s*1/);
+    expect(done.textContent).toContain("tried again on the next run");
+
+    fireEvent.click(within(done).getByRole("button", { name: "Done" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("says when a run stopped at its cap", async () => {
+    finishesAs({
+      summary: { considered: 50, created: 0, updated: 20, skipped: 30, failed: 0, cappedAt: 50 },
+    });
+    await runIt();
+
+    const done = await screen.findByRole("dialog", { name: "Enrichment complete" });
+    expect(done.textContent).toContain("stopped at its cap of 50");
+  });
+
+  it("says when a run stopped before it finished", async () => {
+    finishesAs({ error: "Apollo rejected the key" });
+    await runIt();
+
+    expect((await screen.findByRole("alert")).textContent).toContain("Apollo rejected the key");
+  });
+
+  /**
+   * Reload mid-run and the page still knows: what is running is read from
+   * the server, not remembered by the tab that started it.
+   */
+  it("shows a run that is already going when the page opens", async () => {
+    fetchEnrichmentStatus.mockResolvedValue({
+      current: { runId: "run-1", startedAt: new Date().toISOString(), total: 50, processed: 12 },
+      last: null,
+    });
+    show();
+
+    const banner = await screen.findByRole("status");
+    expect(banner.textContent).toContain("Enrichment is running");
+    expect(banner.textContent).toContain("About 12 of 50 leads looked up so far");
+
+    const button = screen.getByRole("button", { name: /Enriching/ });
+    expect(button.hasAttribute("disabled")).toBe(true);
+  });
+
+  // A second run would look up — and pay for — the same leads.
+  it("shows the refusal when a run is already going elsewhere", async () => {
+    runEnrichment.mockRejectedValue(new Error("An enrichment run is already in progress"));
+    await runIt();
+
+    expect((await within(screen.getByRole("dialog")).findByRole("alert")).textContent).toContain(
+      "already in progress",
+    );
   });
 
   it("abandons the run on cancel", async () => {

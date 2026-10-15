@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, RotateCw, Search } from "lucide-react";
+import { Eye, Search } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { useEnrichmentPreview, useLeads, useRunEnrichment } from "../hooks";
+import { useLeads } from "../hooks";
 import { sourcesOf, type DiscoverySummary, type Lead } from "../types";
+import { EnrichmentControl } from "./enrichment-control";
 import { BADGE, SourceChips, StateBadge } from "./lead-badges";
 import { LeadDetail } from "./lead-detail";
 import { SearchTargetsTab } from "./search-targets-tab";
@@ -43,7 +42,11 @@ export function LeadsScreen() {
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
       <Breadcrumb segments={[{ label: "Leads" }]} />
 
-      {tab === "leads" ? <LeadsTab tab={tab} onTab={setTab} /> : <TargetsTab tab={tab} onTab={setTab} />}
+      {tab === "leads" ? (
+        <LeadsTab tab={tab} onTab={setTab} />
+      ) : (
+        <TargetsTab tab={tab} onTab={setTab} />
+      )}
     </div>
   );
 }
@@ -97,18 +100,6 @@ function TargetsTab({ tab, onTab }: { tab: Tab; onTab: (tab: Tab) => void }) {
 }
 
 function Header({ discovery }: { discovery?: DiscoverySummary | null }) {
-  const [confirming, setConfirming] = useState(false);
-  const enrich = useRunEnrichment();
-
-  async function start() {
-    try {
-      await enrich.mutateAsync(undefined);
-      setConfirming(false);
-    } catch {
-      // Left open, with the error shown, rather than closing on a failure.
-    }
-  }
-
   return (
     <header className="flex flex-wrap items-start justify-between gap-3">
       <div>
@@ -122,87 +113,8 @@ function Header({ discovery }: { discovery?: DiscoverySummary | null }) {
         </p>
       </div>
 
-      <Button variant="dark" onClick={() => setConfirming(true)} disabled={enrich.isPending}>
-        <RotateCw size={18} aria-hidden />
-        {enrich.isPending ? "Enriching…" : "Run enrichment"}
-      </Button>
-
-      {confirming && (
-        <RunEnrichmentConfirm
-          pending={enrich.isPending}
-          error={enrich.error instanceof Error ? enrich.error.message : null}
-          onConfirm={start}
-          onClose={() => setConfirming(false)}
-        />
-      )}
+      <EnrichmentControl />
     </header>
-  );
-}
-
-function RunEnrichmentConfirm({
-  pending,
-  error,
-  onConfirm,
-  onClose,
-}: {
-  pending: boolean;
-  error: string | null;
-  onConfirm: () => void;
-  onClose: () => void;
-}) {
-  const preview = useEnrichmentPreview(true);
-  const nothingToDo = preview.data?.candidates === 0;
-  const unconfigured = preview.data?.configured === false;
-
-  return (
-    <ConfirmDialog
-      title="Run enrichment?"
-      confirmLabel="Run enrichment"
-      pendingLabel="Enriching…"
-      onConfirm={onConfirm}
-      onClose={onClose}
-      pending={pending}
-      disabled={preview.isPending || nothingToDo || unconfigured}
-      error={error}
-    >
-      {preview.isPending && <p className="text-muted">Working out what this would cost…</p>}
-
-      {preview.isError && (
-        <p className="text-danger">
-          Could not work out what this would look up. Run it only if you are sure.
-        </p>
-      )}
-
-      {unconfigured && (
-        <p className="text-danger">
-          Apollo has no credentials configured, so a run would do nothing.
-        </p>
-      )}
-
-      {preview.data && !unconfigured && (
-        <>
-          <p>
-            {nothingToDo ? (
-              "Nothing is waiting to be enriched. Every lead with a website has been looked up recently."
-            ) : (
-              <>
-                This will look up{" "}
-                <span className="font-medium">
-                  {preview.data.candidates} {preview.data.candidates === 1 ? "lead" : "leads"}
-                </span>{" "}
-                on Apollo. Each lookup is billed, whether or not it finds anything.
-              </>
-            )}
-          </p>
-
-          {preview.data.cappedAt !== undefined && (
-            <p className="mt-3 text-muted">
-              That is the per-run cap — more are waiting behind it, and will need another run.
-            </p>
-          )}
-        </>
-      )}
-    </ConfirmDialog>
   );
 }
 
@@ -280,6 +192,9 @@ function LeadsTab({ tab, onTab }: { tab: Tab; onTab: (tab: Tab) => void }) {
                   Source
                 </th>
                 <th scope="col" className="px-5 py-3">
+                  Search target
+                </th>
+                <th scope="col" className="px-5 py-3">
                   Last visit
                 </th>
                 <th scope="col" className="px-5 py-3">
@@ -328,15 +243,27 @@ function LeadRow({ lead, onOpen }: { lead: Lead; onOpen: () => void }) {
         <button type="button" onClick={onOpen} className="text-left font-medium hover:underline">
           {lead.companyName}
         </button>
-        {lead.isNew && (
-          <span className={`${BADGE} ml-2 bg-success-bg text-success-fg`}>New</span>
-        )}
+        {lead.isNew && <span className={`${BADGE} ml-2 bg-success-bg text-success-fg`}>New</span>}
       </td>
 
       <td className="px-5 py-4 text-muted">{lead.address ?? "—"}</td>
 
       <td className="px-5 py-4">
         <SourceChips sources={sourcesOf(lead)} />
+      </td>
+
+      <td className="px-5 py-4">
+        {lead.searchTarget ? (
+          <div
+            className="max-w-48"
+            title={`${lead.searchTarget.query} — ${lead.searchTarget.area}`}
+          >
+            <p className="truncate">{lead.searchTarget.query}</p>
+            <p className="mt-0.5 truncate text-xs text-muted">{lead.searchTarget.area}</p>
+          </div>
+        ) : (
+          <span className="text-muted">—</span>
+        )}
       </td>
 
       <td className="px-5 py-4 text-muted">
