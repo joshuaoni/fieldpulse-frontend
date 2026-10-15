@@ -127,3 +127,23 @@ describe("clearing a week back to empty", () => {
     expect((await screen.findByRole("dialog")).textContent).toContain("already published stays");
   });
 });
+
+describe("the button that plans the week", () => {
+  it("says Generate on a week with nothing planned", async () => {
+    show([]);
+
+    await screen.findByText(/No plans for this week yet/);
+
+    expect(screen.getByRole("button", { name: "Generate" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Regenerate" })).toBeNull();
+  });
+
+  it("says Regenerate once the week has a plan", async () => {
+    show([plan("1", "DRAFT", [stop("s1", "Capital Starters")])]);
+
+    await screen.findByText("Pair 1");
+
+    expect(screen.getByRole("button", { name: "Regenerate" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Generate" })).toBeNull();
+  });
+});

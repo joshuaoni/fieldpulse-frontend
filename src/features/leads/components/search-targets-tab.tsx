@@ -1,20 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Play, Plus } from "lucide-react";
+import { Pencil, Play, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Modal } from "@/components/ui/modal";
-import { TextField } from "@/components/ui/text-field";
 import {
   useCollectDiscovery,
-  useCreateSearchTarget,
   useRunSearchTarget,
   useSearchTargets,
   useSetSearchTargetActive,
 } from "../hooks";
 import type { SearchTarget } from "../types";
 import { BADGE } from "./lead-badges";
+import { SearchTargetForm } from "./search-target-form";
 
 const ago = (iso: string) => {
   const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
@@ -52,8 +50,8 @@ export function SearchTargetsTab() {
 
       {collecting.stalled && (
         <p role="alert" className="mt-6 text-sm text-danger">
-          A scrape is running, but its results could not be collected: {collecting.stalled}. It
-          will be picked up by the next scheduled pass, or abandoned if it never reports back.
+          A scrape is running, but its results could not be collected: {collecting.stalled}. It will
+          be picked up by the next scheduled pass, or abandoned if it never reports back.
         </p>
       )}
 
@@ -61,7 +59,7 @@ export function SearchTargetsTab() {
 
       {targets?.length === 0 && (
         <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
-          No search targets yet. 
+          No search targets yet.
         </p>
       )}
 
@@ -101,7 +99,7 @@ export function SearchTargetsTab() {
         </div>
       )}
 
-      {adding && <AddTargetForm onClose={() => setAdding(false)} />}
+      {adding && <SearchTargetForm onClose={() => setAdding(false)} />}
     </>
   );
 }
@@ -140,6 +138,8 @@ function useCollecting(runId: string | null) {
 
 function TargetRow({ target, maxResults }: { target: SearchTarget; maxResults: number }) {
   const [confirming, setConfirming] = useState(false);
+  const [toggling, setToggling] = useState(false);
+  const [editing, setEditing] = useState(false);
   const run = useRunSearchTarget();
   const setActive = useSetSearchTargetActive();
 
@@ -220,12 +220,51 @@ function TargetRow({ target, maxResults }: { target: SearchTarget; maxResults: n
 
           <button
             type="button"
-            onClick={() => setActive.mutate({ id: target.id, isActive: !target.isActive })}
+            onClick={() => setEditing(true)}
+            aria-label={`Edit ${target.query} in ${target.area}`}
+            className="rounded-md p-1.5 text-muted hover:bg-sunken hover:text-foreground"
+          >
+            <Pencil size={15} aria-hidden />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActive.reset();
+              setToggling(true);
+            }}
             disabled={setActive.isPending}
             className="rounded-md px-2 py-1 text-sm text-muted hover:bg-sunken hover:text-foreground"
           >
             {target.isActive ? "Retire" : "Restore"}
           </button>
+
+          {toggling && (
+            <ConfirmDialog
+              title={target.isActive ? "Retire this search?" : "Restore this search?"}
+              confirmLabel={target.isActive ? "Retire" : "Restore"}
+              pendingLabel={target.isActive ? "Retiring…" : "Restoring…"}
+              pending={setActive.isPending}
+              error={setActive.error instanceof Error ? setActive.error.message : null}
+              onClose={() => setToggling(false)}
+              onConfirm={() =>
+                setActive.mutate(
+                  { id: target.id, isActive: !target.isActive },
+                  { onSuccess: () => setToggling(false) },
+                )
+              }
+            >
+              <p>
+                <span className="font-medium">{target.query}</span> in{" "}
+                <span className="font-medium">{target.area}</span>{" "}
+                {target.isActive
+                  ? "stops being run until it is restored."
+                  : "goes back into the scheduled runs, and can be run by hand again."}
+              </p>
+            </ConfirmDialog>
+          )}
+
+          {editing && <SearchTargetForm from={target} onClose={() => setEditing(false)} />}
         </div>
       </td>
     </tr>
@@ -258,106 +297,26 @@ function RunTargetConfirm({
       error={error}
     >
       <p>
-        This starts a Google Maps scrape for{" "}
-        <span className="font-medium">{target.query}</span> in{" "}
+        This starts a Google Maps scrape for <span className="font-medium">{target.query}</span> in{" "}
         <span className="font-medium">{target.area}</span>
         {maxResults > 0 && <> — up to {maxResults} results</>}.
       </p>
 
       {target.lastRunCapped && (
         <p className="mt-3 text-warning-fg">
-          The last run stopped at its cap, so this one would buy much the same list again.
-          Narrowing the area, or raising the cap, gets you something new.
+          The last run stopped at its cap, so this one would buy much the same list again. Narrowing
+          the area, or raising the cap, gets you something new.
         </p>
       )}
 
       {target.lastRunNewLeads === 0 && !target.lastRunCapped && (
         <p className="mt-3 text-warning-fg">
-          The last run found no new leads. This search has likely given everything Maps lists
-          for it.
+          The last run found no new leads. This search has likely given everything Maps lists for
+          it.
         </p>
       )}
 
-      {target.lastRunAt && (
-        <p className="mt-3 text-muted">Last run {ago(target.lastRunAt)}.</p>
-      )}
+      {target.lastRunAt && <p className="mt-3 text-muted">Last run {ago(target.lastRunAt)}.</p>}
     </ConfirmDialog>
-  );
-}
-
-function AddTargetForm({ onClose }: { onClose: () => void }) {
-  const [query, setQuery] = useState("");
-  const [area, setArea] = useState("");
-  const [sector, setSector] = useState("");
-  const create = useCreateSearchTarget();
-
-  async function onSubmit() {
-    try {
-      await create.mutateAsync({ query, area, sector: sector || undefined });
-      onClose();
-    } catch {
-      // Rendered from the mutation below rather than swallowed.
-    }
-  }
-
-  return (
-    <Modal
-      onClose={onClose}
-      label="Add a search target"
-      header={
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">Add search target</h2>
-          <p className="mt-0.5 text-sm text-muted">One Maps search, saved so it can be re-run</p>
-        </div>
-      }
-    >
-      <TextField
-        id="target-query"
-        label="Search"
-        placeholder="hardware stores"
-        maxLength={200}
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-      />
-
-      <TextField
-        id="target-area"
-        label="Area"
-        placeholder="Ikoyi, Lagos"
-        maxLength={200}
-        value={area}
-        onChange={(event) => setArea(event.target.value)}
-        className="mt-4"
-      />
-
-      <TextField
-        id="target-sector"
-        label="Sector (optional)"
-        placeholder="Construction"
-        maxLength={120}
-        value={sector}
-        onChange={(event) => setSector(event.target.value)}
-        className="mt-4"
-      />
-
-      {create.isError && (
-        <p role="alert" className="mt-4 text-sm text-danger">
-          {create.error instanceof Error ? create.error.message : "Could not save the target"}
-        </p>
-      )}
-
-      <div className="mt-8 flex justify-end gap-3">
-        <Button variant="outline" onClick={onClose} disabled={create.isPending}>
-          Cancel
-        </Button>
-        <Button
-          variant="dark"
-          onClick={onSubmit}
-          disabled={create.isPending || !query.trim() || !area.trim()}
-        >
-          {create.isPending ? "Saving…" : "Save target"}
-        </Button>
-      </div>
-    </Modal>
   );
 }

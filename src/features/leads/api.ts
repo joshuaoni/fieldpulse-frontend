@@ -3,10 +3,11 @@ import type {
   ChatwootSyncResult,
   DiscoveryStarted,
   EnrichmentPreview,
+  EnrichmentRun,
+  EnrichmentStatus,
   DiscoveryTick,
   LeadEngagement,
   LeadPage,
-  PassSummary,
   SearchTarget,
   SearchTargetsResponse,
 } from "./types";
@@ -51,9 +52,7 @@ export async function fetchLeads(filters: LeadFilters = {}): Promise<LeadPage> {
 }
 
 export async function fetchSearchTargets(includeInactive = true): Promise<SearchTargetsResponse> {
-  return api<SearchTargetsResponse>(
-    `/api/leads/search-targets?includeInactive=${includeInactive}`,
-  );
+  return api<SearchTargetsResponse>(`/api/leads/search-targets?includeInactive=${includeInactive}`);
 }
 
 export async function previewEnrichment(): Promise<EnrichmentPreview> {
@@ -68,17 +67,14 @@ export async function createSearchTarget(input: {
   area: string;
   sector?: string;
 }): Promise<SearchTarget> {
-  const { searchTarget } = await api<{ searchTarget: SearchTarget }>(
-    "/api/leads/search-targets",
-    { method: "POST", body: JSON.stringify(input) },
-  );
+  const { searchTarget } = await api<{ searchTarget: SearchTarget }>("/api/leads/search-targets", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
   return searchTarget;
 }
 
-export async function setSearchTargetActive(
-  id: string,
-  isActive: boolean,
-): Promise<SearchTarget> {
+export async function setSearchTargetActive(id: string, isActive: boolean): Promise<SearchTarget> {
   const { searchTarget } = await api<{ searchTarget: SearchTarget }>(
     `/api/leads/search-targets/${id}/status`,
     { method: "PATCH", body: JSON.stringify({ isActive }) },
@@ -101,9 +97,14 @@ export async function collectDiscovery(): Promise<DiscoveryTick> {
   return step;
 }
 
-export async function runEnrichment(): Promise<PassSummary> {
-  const { summary } = await api<{ summary: PassSummary }>("/api/leads/enrichment-runs", {
+export async function runEnrichment(): Promise<EnrichmentRun> {
+  const { run } = await api<{ run: EnrichmentRun }>("/api/leads/enrichment-runs", {
     method: "POST",
   });
-  return summary;
+  return run;
+}
+
+export async function fetchEnrichmentStatus(): Promise<EnrichmentStatus> {
+  const { status } = await api<{ status: EnrichmentStatus }>("/api/leads/enrichment-runs/current");
+  return status;
 }

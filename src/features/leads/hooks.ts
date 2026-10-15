@@ -8,6 +8,7 @@ export const leadKeys = {
   list: (filters: leadsApi.LeadFilters) => ["leads", "list", filters] as const,
   searchTargets: () => ["leads", "search-targets"] as const,
   enrichmentPreview: () => ["leads", "enrichment-preview"] as const,
+  enrichmentStatus: () => ["leads", "enrichment-status"] as const,
   engagement: (leadId: string) => ["leads", "engagement", leadId] as const,
   engagementByContact: (contactId: string) =>
     ["leads", "engagement", "by-contact", contactId] as const,
@@ -58,7 +59,7 @@ export function useSearchTargets() {
 }
 
 /** Everything on this screen is downstream of a run, so all of it refetches. */
-function useTargetMutation<TVars>(mutationFn: (vars: TVars) => Promise<unknown>) {
+function useTargetMutation<TVars, TResult>(mutationFn: (vars: TVars) => Promise<TResult>) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -92,6 +93,14 @@ export function useEnrichmentPreview(enabled: boolean) {
 
 export function useRunEnrichment() {
   return useTargetMutation(leadsApi.runEnrichment);
+}
+
+export function useEnrichmentStatus() {
+  return useQuery({
+    queryKey: leadKeys.enrichmentStatus(),
+    queryFn: leadsApi.fetchEnrichmentStatus,
+    refetchInterval: (query) => (query.state.data?.current ? 4_000 : false),
+  });
 }
 
 export function useCollectDiscovery() {
