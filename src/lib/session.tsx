@@ -12,7 +12,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { fetchMe, logout as clearSession } from "@/features/auth/api";
 import type { AuthUser } from "@/features/auth/types";
-// import { isAllowedUser } from "./access";
+import { hasFieldAccess } from "./field-role";
 import { getToken } from "./token";
 
 type SessionStatus = "loading" | "authenticated" | "anonymous";
@@ -31,10 +31,10 @@ async function resolveSession(): Promise<AuthUser | null> {
   try {
     const user = await fetchMe();
 
-    // if (!isAllowedUser(user.email)) {
-    //   clearSession();
-    //   return null;
-    // }
+    if (!(await hasFieldAccess())) {
+      clearSession();
+      return null;
+    }
 
     return user;
   } catch {

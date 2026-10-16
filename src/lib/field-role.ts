@@ -22,6 +22,17 @@ export async function fetchMyFieldRole(): Promise<MyFieldRoleResponse> {
   return api<MyFieldRoleResponse>("/api/field-roles/me");
 }
 
+export const NO_FIELD_ACCESS_MESSAGE =
+  "This account does not have access to FieldPulse. Ask a field manager to give you a FieldPulse role.";
+
+export async function hasFieldAccess(): Promise<boolean> {
+  try {
+    return (await fetchMyFieldRole()).fieldRole !== null;
+  } catch {
+    return true;
+  }
+}
+
 export function useMyFieldRole() {
   return useQuery({
     queryKey: fieldRoleKeys.mine,
