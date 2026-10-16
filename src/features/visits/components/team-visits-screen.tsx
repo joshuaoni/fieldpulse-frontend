@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useTeamVisits } from "../hooks";
 import type { VisitStatus } from "../types";
 import { VisitList } from "./visit-list";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 const FILTERS: Array<{ label: string; status?: VisitStatus }> = [
   { label: "All" },
@@ -51,7 +52,7 @@ export function TeamVisitsScreen() {
         ))}
       </div>
 
-      {isPending && <p className="text-sm text-muted">Loading…</p>}
+      {isPending && <FieldPulseLoader />}
       {isError && (
         <p role="alert" className="text-sm text-danger">
           {error instanceof Error ? error.message : "Could not load team visits"}

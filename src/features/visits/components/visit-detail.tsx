@@ -12,6 +12,7 @@ import { AttendanceCard } from "./attendance-card";
 import { ReportSubmitted } from "./report-submitted";
 import { VisitActions } from "./visit-actions";
 import { UnplannedBadge } from "@/components/unplanned-badge";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 import { VisitStatusBadge } from "./visit-status-badge";
 import { LeadEngagementPanel } from "@/components/lead-engagement-panel";
 
@@ -21,7 +22,7 @@ export function VisitDetail({ visitId }: { visitId: string }) {
   const fieldRole = useMyFieldRole();
   const { data: visit, isPending, isError, error } = useVisit(visitId);
 
-  if (isPending) return <p className="text-sm text-muted">Loading…</p>;
+  if (isPending) return <FieldPulseLoader />;
   if (isError) {
     return (
       <p role="alert" className="text-sm text-danger">

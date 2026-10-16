@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useMyFieldRole } from "@/lib/field-role";
 import { useSession } from "@/lib/session";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 /**
  * Gate for any screen that should be reachable only by a field manager.
@@ -24,7 +25,7 @@ export function RequireFieldManager({ children }: { children: React.ReactNode })
   if (status !== "authenticated" || knownNotManager) {
     return (
       <main className="flex min-h-dvh flex-1 items-center justify-center">
-        <p className="text-sm text-muted">Loading…</p>
+        <FieldPulseLoader />
       </main>
     );
   }
@@ -47,7 +48,7 @@ export function RequireFieldManager({ children }: { children: React.ReactNode })
   if (fieldRole.isPending || !isManager) {
     return (
       <main className="flex min-h-dvh flex-1 items-center justify-center">
-        <p className="text-sm text-muted">Loading…</p>
+        <FieldPulseLoader />
       </main>
     );
   }

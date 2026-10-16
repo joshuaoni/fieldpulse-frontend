@@ -14,6 +14,7 @@ import { pairLabel } from "@/lib/pairs";
 import { useSession } from "@/lib/session";
 import { useCheckIns } from "@/features/check-ins/hooks";
 import { useTeamVisits } from "@/features/visits/hooks";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 import {
   ATTENTION_BADGE,
   ATTENTION_LABEL,
@@ -110,7 +111,7 @@ export function OverviewScreen() {
       <div className="mt-5 grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
         <div className="flex flex-col gap-5">
           <Panel title="Active reps" href="/manager/pairs">
-            {pairs.isPending && <p className="p-5 pt-0 text-sm text-muted">Loading…</p>}
+            {pairs.isPending && <FieldPulseLoader className="p-5 pt-0" />}
 
             {pairs.data && out.length === 0 && (
               <p className="p-5 pt-0 text-sm text-muted">Nobody has started their day yet.</p>
@@ -124,7 +125,7 @@ export function OverviewScreen() {
           </Panel>
 
           <Panel title="Recent reports" href="/manager/reports">
-            {reports.isPending && <p className="p-5 pt-0 text-sm text-muted">Loading…</p>}
+            {reports.isPending && <FieldPulseLoader className="p-5 pt-0" />}
 
             {reports.data && reports.data.reports.length === 0 && (
               <p className="p-5 pt-0 text-sm text-muted">No visits have been written up yet.</p>
@@ -140,7 +141,7 @@ export function OverviewScreen() {
 
         <Panel title="Needs attention" href="/manager/check-ins">
           {(flagged.isPending || missed.isPending) && (
-            <p className="p-5 pt-0 text-sm text-muted">Loading…</p>
+            <FieldPulseLoader className="p-5 pt-0" />
           )}
 
           {(flagged.isError || missed.isError) && (

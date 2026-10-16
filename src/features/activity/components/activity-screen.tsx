@@ -16,6 +16,7 @@ import {
   type ActivityFilters,
 } from "../types";
 import { ActivityFiltersDialog } from "./activity-filters";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 const PAGE_SIZE = 50;
 
@@ -128,7 +129,7 @@ export function ActivityScreen() {
         </p>
       )}
 
-      {isPending && <p className="mt-6 text-sm text-muted">Loading…</p>}
+      {isPending && <FieldPulseLoader className="mt-6" />}
 
       {data && events.length === 0 && (
         <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">

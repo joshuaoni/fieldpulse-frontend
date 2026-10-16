@@ -12,6 +12,7 @@ import { myAttendance, type Visit } from "../types";
 import { repStatus } from "../week";
 import { RepAccountMenu } from "./rep-account-menu";
 import { RouteCard } from "./route-card";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 const ROLE_LABEL: Record<string, string> = {
   FIELD_REP: "Sales Rep",
@@ -160,7 +161,7 @@ export function RepHomeScreen() {
         ))}
       </div>
 
-      {isPending && <p className="mt-4 text-sm text-muted">Loading…</p>}
+      {isPending && <FieldPulseLoader className="mt-4" />}
 
       {isError && (
         <p role="alert" className="mt-4 text-sm text-danger">

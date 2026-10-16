@@ -18,6 +18,7 @@ import { pairLabel } from "@/lib/pairs";
 import { usePairs, useSetPairActive } from "../hooks";
 import { matchesRep, openMembers, type SalesPair } from "../types";
 import { PairingForm } from "./pairing-form";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 function startOfDay(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
@@ -115,7 +116,7 @@ export function PairsScreen() {
         </p>
       )}
 
-      {isPending && <p className="mt-6 text-sm text-muted">Loading…</p>}
+      {isPending && <FieldPulseLoader className="mt-6" />}
 
       {pairs && shown.length === 0 && (
         <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">

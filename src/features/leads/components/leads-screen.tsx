@@ -9,6 +9,7 @@ import { EnrichmentControl } from "./enrichment-control";
 import { BADGE, SourceChips, StateBadge } from "./lead-badges";
 import { LeadDetail } from "./lead-detail";
 import { SearchTargetsTab } from "./search-targets-tab";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 const ago = (iso: string) => {
   const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
@@ -169,7 +170,7 @@ function LeadsTab({ tab, onTab }: { tab: Tab; onTab: (tab: Tab) => void }) {
         </p>
       )}
 
-      {isPending && <p className="mt-6 text-sm text-muted">Loading…</p>}
+      {isPending && <FieldPulseLoader className="mt-6" />}
 
       {data?.leads.length === 0 && (
         <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">

@@ -19,6 +19,7 @@ import {
   type TeamMetric,
 } from "../types";
 import { ReportFiltersDialog } from "./report-filters";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
@@ -160,7 +161,7 @@ export function ReportsScreen() {
           </p>
         )}
 
-        {reports.isPending && <p className="mt-6 text-sm text-muted">Loading…</p>}
+        {reports.isPending && <FieldPulseLoader className="mt-6" />}
 
         {reports.isError && (
           <p role="alert" className="mt-6 text-sm text-danger">

@@ -124,3 +124,33 @@ body {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
     env(safe-area-inset-left);
 }
+
+/* FieldPulseLoader (src/components/ui/fieldpulse-loader.tsx) */
+@keyframes fp-corner-rise {
+  0%       { transform: translateY(72px); }
+  15%, 85% { transform: translateY(52px); }
+  100%     { transform: translateY(72px); }
+}
+@keyframes fp-glyph-rise {
+  0%, 15%  { transform: translateY(74px); }
+  30%, 85% { transform: translateY(10px); }
+  100%     { transform: translateY(74px); }
+}
+@keyframes fp-wave-a {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-87px); }
+}
+@keyframes fp-wave-b {
+  from { transform: translateX(-87px); }
+  to   { transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fp-loader * { animation: none !important; }
+  .fp-loader .fp-corner-liquid { transform: translateY(52px); }
+  .fp-loader .fp-glyph-liquid { transform: translateY(10px); }
+  .fp-loader svg { animation: fp-pulse 1.6s ease-in-out infinite !important; }
+}
+@keyframes fp-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}

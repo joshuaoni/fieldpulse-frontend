@@ -16,6 +16,7 @@ import {
 } from "../week";
 import { PendingActionsBanner } from "./pending-actions-banner";
 import { RouteCard } from "./route-card";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 function todayIndex(weekStart: Date): number | null {
   const today = new Date();
@@ -119,7 +120,7 @@ export function MyWeekScreen() {
 
       <h2 className="mt-7 text-sm font-medium text-muted">My Visits</h2>
 
-      {isPending && <p className="mt-3 text-sm text-muted">Loading…</p>}
+      {isPending && <FieldPulseLoader className="mt-3" />}
 
       {isError && (
         <p role="alert" className="mt-3 text-sm text-danger">

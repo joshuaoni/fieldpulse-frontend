@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 import { useMyFieldRole } from "@/lib/field-role";
 
 export function LandingRedirect() {
@@ -20,9 +21,11 @@ export function LandingRedirect() {
 
   return (
     <main className="flex flex-1 items-center justify-center">
-      <p className="text-sm text-muted">
-        {fieldRole.isError ? "Could not work out where to take you." : "Loading…"}
-      </p>
+      {fieldRole.isError ? (
+        <p className="text-sm text-muted">Could not work out where to take you.</p>
+      ) : (
+        <FieldPulseLoader />
+      )}
     </main>
   );
 }

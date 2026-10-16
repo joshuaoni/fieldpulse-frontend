@@ -13,6 +13,7 @@ import {
   type CheckIn,
   type CheckInStatus,
 } from "../types";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 function thisWeek(): { from: string; to: string } {
   const monday = new Date();
@@ -108,7 +109,7 @@ export function CheckInsScreen() {
         </p>
       )}
 
-      {isPending && <p className="mt-6 text-sm text-muted">Loading…</p>}
+      {isPending && <FieldPulseLoader className="mt-6" />}
 
       {data && data.checkIns.length === 0 && (
         <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">

@@ -8,6 +8,7 @@ import { useNotifications } from "../hooks";
 import { isRead, useReadState } from "../read-state";
 import { byDay, type FieldNotification, type NotificationRange } from "../types";
 import { NotificationFilters } from "./notification-filters";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 const time = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -51,7 +52,7 @@ export function NotificationsScreen() {
 
       <PushSetup />
 
-      {isPending && <p className="mt-6 text-sm text-muted">Loading…</p>}
+      {isPending && <FieldPulseLoader className="mt-6" />}
 
       {isError && (
         <p role="alert" className="mt-6 text-sm text-danger">

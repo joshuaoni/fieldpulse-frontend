@@ -13,6 +13,7 @@ import {
 import type { SearchTarget } from "../types";
 import { BADGE } from "./lead-badges";
 import { SearchTargetForm } from "./search-target-form";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 const ago = (iso: string) => {
   const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
@@ -55,7 +56,7 @@ export function SearchTargetsTab() {
         </p>
       )}
 
-      {isPending && <p className="mt-6 text-sm text-muted">Loading…</p>}
+      {isPending && <FieldPulseLoader className="mt-6" />}
 
       {targets?.length === 0 && (
         <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">

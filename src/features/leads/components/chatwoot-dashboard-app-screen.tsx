@@ -7,6 +7,7 @@ import { ApiError } from "@/lib/errors";
 import { outcomeLabel } from "@/lib/outcomes";
 import { useSession } from "@/lib/session";
 import { useLeadEngagementByChatwootContact } from "../hooks";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 interface ChatwootAppContext {
   contact?: { id?: number | string };
@@ -78,14 +79,14 @@ export function ChatwootDashboardAppScreen() {
     error,
   } = useLeadEngagementByChatwootContact(contactId, status === "authenticated");
 
-  if (status === "loading") return <p className="p-4 text-sm text-muted">Loading…</p>;
+  if (status === "loading") return <FieldPulseLoader className="p-4" />;
   if (status === "anonymous") return <SignIn onSignedIn={() => void refresh()} />;
 
   if (!contactId) {
     return <p className="p-4 text-sm text-muted">Waiting for Chatwoot…</p>;
   }
 
-  if (isPending) return <p className="p-4 text-sm text-muted">Loading…</p>;
+  if (isPending) return <FieldPulseLoader className="p-4" />;
 
   if (isError) {
     const notFound = error instanceof ApiError && error.status === 404;
