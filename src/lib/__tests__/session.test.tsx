@@ -13,6 +13,9 @@ vi.mock("@/features/auth/api", () => ({
 }));
 vi.mock("../token", () => ({ getToken: () => "token" }));
 
+const fetchMyFieldRole = vi.fn();
+vi.mock("../api-client", () => ({ api: () => fetchMyFieldRole() }));
+
 const person = (id: string) => ({
   id,
   firstName: id,
@@ -53,7 +56,10 @@ async function signedInAs(firstId: string) {
   return client;
 }
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  fetchMyFieldRole.mockResolvedValue({ fieldRole: "FIELD_MANAGER" });
+});
 afterEach(cleanup);
 
 /**
@@ -95,5 +101,50 @@ describe("what is cached across a change of person", () => {
 
     await waitFor(() => expect(fetchMe).toHaveBeenCalledTimes(2));
     expect(client.getQueryData(ROLE_KEY)).toEqual({ fieldRole: "FIELD_MANAGER" });
+  });
+});
+
+/**
+ * A valid ERP account is not enough to use FieldPulse: it takes a FieldPulse
+ * role, or SUPERADMIN, which the backend reports as FIELD_MANAGER.
+ */
+describe("who may stay signed in", () => {
+  function mount() {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <SessionProvider>
+          <Probe />
+        </SessionProvider>
+      </QueryClientProvider>,
+    );
+  }
+
+  it("signs out an account with no FieldPulse role", async () => {
+    fetchMe.mockResolvedValue(person("outsider"));
+    fetchMyFieldRole.mockResolvedValue({ fieldRole: null });
+    mount();
+
+    await screen.findByText("nobody");
+    expect(logout).toHaveBeenCalled();
+  });
+
+  it.each(["FIELD_MANAGER", "FIELD_REP"])("keeps an account holding %s", async (fieldRole) => {
+    fetchMe.mockResolvedValue(person("member"));
+    fetchMyFieldRole.mockResolvedValue({ fieldRole });
+    mount();
+
+    await screen.findByText("member");
+    expect(logout).not.toHaveBeenCalled();
+  });
+
+  // The backend still refuses every request from someone without a role, so
+  // a blip on this one call must not throw a rep out mid-visit.
+  it("does not sign anyone out because the role check failed", async () => {
+    fetchMe.mockResolvedValue(person("rep"));
+    fetchMyFieldRole.mockRejectedValue(new Error("offline"));
+    mount();
+
+    await screen.findByText("rep");
+    expect(logout).not.toHaveBeenCalled();
   });
 });

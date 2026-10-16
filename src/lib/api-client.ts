@@ -50,10 +50,8 @@ export async function request<T>(
   if (rest.body && !isFormData && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  if (auth) {
-    const token = getToken();
-    if (token) headers.set("Authorization", `Bearer ${token}`);
-  }
+  const token = auth ? getToken() : null;
+  if (token) headers.set("Authorization", `Bearer ${token}`);
 
   const deadline = new AbortController();
   let expiry: ReturnType<typeof setTimeout> | undefined;
@@ -80,7 +78,7 @@ export async function request<T>(
     clearTimeout(expiry);
   }
 
-  if (response.status === 401) {
+  if (response.status === 401 && token) {
     clearToken();
     throw new ApiError(401, "Session expired — sign in again");
   }

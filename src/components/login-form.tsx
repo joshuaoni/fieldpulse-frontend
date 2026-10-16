@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type InputHTMLAttributes } from "react";
 import { useSession } from "@/lib/session";
-import { login } from "@/features/auth/api";
+import { login, logout } from "@/features/auth/api";
+import { hasFieldAccess, NO_FIELD_ACCESS_MESSAGE } from "@/lib/field-role";
 
 interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   id: string;
@@ -62,6 +63,12 @@ export function LoginForm({
     setSubmitting(true);
     try {
       await login(email, password);
+
+      if (!(await hasFieldAccess())) {
+        logout();
+        throw new Error(NO_FIELD_ACCESS_MESSAGE);
+      }
+
       await refresh();
       if (onSignedIn) onSignedIn();
       else router.replace("/");
