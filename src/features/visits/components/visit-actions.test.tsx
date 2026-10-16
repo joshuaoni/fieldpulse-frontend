@@ -333,7 +333,7 @@ describe("while still checked in somewhere else", () => {
     show(visit([attendance()]));
 
     const back = await screen.findByText(/Go to Bright Field Ltd/);
-    expect(back.closest("a")?.getAttribute("href")).toBe("/visits/visit-2");
+    expect(back.closest("a")?.getAttribute("href")).toBe("/visits?id=visit-2");
   });
 
   it("lets them in once that one is checked out of", async () => {

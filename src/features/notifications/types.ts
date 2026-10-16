@@ -1,5 +1,6 @@
 import type { Reminder } from "@/features/reminders/types";
 import type { Visit } from "@/features/visits/types";
+import { visitHref } from "@/features/visits/href";
 
 export type NotificationKind = "REMINDER" | "REPORT_SUBMITTED" | "VISIT_ADDED";
 
@@ -86,7 +87,7 @@ export function buildFeed({
         title: visit.lead.companyName,
         body: `Your report for ${visit.lead.companyName} was submitted successfully.`,
         at: report.submittedAt,
-        href: `/visits/${visit.id}`,
+        href: visitHref(visit.id),
       });
     }
 
@@ -97,7 +98,7 @@ export function buildFeed({
         title: "New stop added",
         body: `${visit.lead.companyName} was added to your route.`,
         at: visit.createdAt,
-        href: `/visits/${visit.id}`,
+        href: visitHref(visit.id),
       });
     }
   }
