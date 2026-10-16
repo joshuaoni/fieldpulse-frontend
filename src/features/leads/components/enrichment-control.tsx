@@ -34,10 +34,11 @@ export function EnrichmentControl() {
   }
 
   async function start() {
+    const since = Date.now();
     try {
       const run = await enrich.mutateAsync(undefined);
       setConfirming(false);
-      setWatching({ runId: run.runId, since: Date.now() });
+      setWatching({ runId: run.runId, since });
     } catch {
       // Left open, with the error shown, rather than closing on a failure.
     }
