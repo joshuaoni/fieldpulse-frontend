@@ -163,7 +163,7 @@ export function ReportsScreen() {
           </p>
         )}
 
-        {reports.isPending && <FieldPulseLoader className="mt-6" />}
+        {reports.isPending && <FieldPulseLoader prominent className="mt-6" />}
 
         {reports.isError && (
           <p role="alert" className="mt-6 text-sm text-danger">

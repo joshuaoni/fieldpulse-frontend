@@ -24,7 +24,7 @@ export function LandingRedirect() {
       {fieldRole.isError ? (
         <p className="text-sm text-muted">Could not work out where to take you.</p>
       ) : (
-        <FieldPulseLoader />
+        <FieldPulseLoader prominent />
       )}
     </main>
   );

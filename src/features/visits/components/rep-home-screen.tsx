@@ -162,7 +162,7 @@ export function RepHomeScreen() {
         Log a visit that is not planned
       </button>
 
-      <div className="-mx-5 mt-3 flex gap-2 overflow-x-auto px-5">
+      <div className="-mx-5 mt-3 flex gap-2 overflow-x-auto px-5 scrollbar-none [&::-webkit-scrollbar]:hidden">
         {FILTERS.map(({ value, label }) => (
           <button
             key={value}
@@ -182,8 +182,12 @@ export function RepHomeScreen() {
       </div>
 
       {filter === "NOT_CHECKED_OUT" ? (
-        <>
-          {openCheckIns.isPending && <FieldPulseLoader className="mt-4" />}
+        <div className="flex flex-1 flex-col">
+          {openCheckIns.isPending && (
+            <Centered>
+              <FieldPulseLoader prominent />
+            </Centered>
+          )}
 
           {openCheckIns.isError && (
             <p role="alert" className="mt-4 text-sm text-danger">
@@ -192,9 +196,9 @@ export function RepHomeScreen() {
           )}
 
           {openCheckIns.data && unclosed.length === 0 && (
-            <p className="mt-4 rounded-2xl border border-dashed border-border-strong p-6 text-center text-sm text-muted">
-              You have checked out of every visit.
-            </p>
+            <Centered>
+              <EmptyBox>You have checked out of every visit.</EmptyBox>
+            </Centered>
           )}
 
           <ul className="mt-3 flex flex-col gap-3">
@@ -212,10 +216,14 @@ export function RepHomeScreen() {
             totalItems={unclosedPage.totalItems}
             onPageChange={unclosedPage.setPage}
           />
-        </>
+        </div>
       ) : (
-        <>
-          {isPending && <FieldPulseLoader className="mt-4" />}
+        <div className="flex flex-1 flex-col">
+          {isPending && (
+            <Centered>
+              <FieldPulseLoader prominent />
+            </Centered>
+          )}
 
           {isError && (
             <p role="alert" className="mt-4 text-sm text-danger">
@@ -223,12 +231,16 @@ export function RepHomeScreen() {
             </p>
           )}
 
-          {data && visits.length === 0 && <NoVisits />}
+          {data && visits.length === 0 && (
+            <Centered>
+              <EmptyBox>New visits will appear here when available.</EmptyBox>
+            </Centered>
+          )}
 
           {data && visits.length > 0 && shown.length === 0 && (
-            <p className="mt-4 rounded-2xl border border-dashed border-border-strong p-6 text-center text-sm text-muted">
-              Nothing here under that filter.
-            </p>
+            <Centered>
+              <EmptyBox>Nothing here under that filter.</EmptyBox>
+            </Centered>
           )}
 
           <ul className="mt-3 flex flex-col gap-3">
@@ -247,7 +259,7 @@ export function RepHomeScreen() {
             totalItems={shownPage.totalItems}
             onPageChange={shownPage.setPage}
           />
-        </>
+        </div>
       )}
 
       {logging && <LogUnplannedVisit onClose={() => setLogging(false)} />}
@@ -283,10 +295,14 @@ function OpenCheckInCard({ visit, checkInAt }: { visit: Visit; checkInAt: string
   );
 }
 
-function NoVisits() {
+function Centered({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-1 flex-col justify-center py-4">{children}</div>;
+}
+
+function EmptyBox({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-4 rounded-2xl border border-dashed border-border-strong p-6 text-center text-sm text-muted">
-      New visits will appear here when available.
+    <p className="rounded-2xl border border-dashed border-border-strong p-6 text-center text-sm text-muted">
+      {children}
     </p>
   );
 }

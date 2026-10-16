@@ -22,7 +22,7 @@ export function VisitDetail({ visitId }: { visitId: string }) {
   const fieldRole = useMyFieldRole();
   const { data: visit, isPending, isError, error } = useVisit(visitId);
 
-  if (isPending) return <FieldPulseLoader />;
+  if (isPending) return <FieldPulseLoader prominent />;
   if (isError) {
     return (
       <p role="alert" className="text-sm text-danger">

@@ -54,7 +54,7 @@ export function NotificationsScreen() {
 
       <PushSetup />
 
-      {isPending && <FieldPulseLoader className="mt-6" />}
+      {isPending && <FieldPulseLoader prominent className="mt-6" />}
 
       {isError && (
         <p role="alert" className="mt-6 text-sm text-danger">

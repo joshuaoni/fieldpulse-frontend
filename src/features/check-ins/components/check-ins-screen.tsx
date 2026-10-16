@@ -111,7 +111,7 @@ export function CheckInsScreen() {
         </p>
       )}
 
-      {isPending && <FieldPulseLoader className="mt-6" />}
+      {isPending && <FieldPulseLoader prominent className="mt-6" />}
 
       {data && data.checkIns.length === 0 && (
         <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">

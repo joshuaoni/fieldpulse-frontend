@@ -122,7 +122,7 @@ export function MyWeekScreen() {
 
       <h2 className="mt-7 text-sm font-medium text-muted">My Visits</h2>
 
-      {isPending && <FieldPulseLoader className="mt-3" />}
+      {isPending && <FieldPulseLoader prominent className="mt-3" />}
 
       {isError && (
         <p role="alert" className="mt-3 text-sm text-danger">
