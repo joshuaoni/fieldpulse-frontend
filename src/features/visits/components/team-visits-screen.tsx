@@ -56,7 +56,7 @@ export function TeamVisitsScreen() {
         ))}
       </div>
 
-      {isPending && <FieldPulseLoader />}
+      {isPending && <FieldPulseLoader prominent />}
       {isError && (
         <p role="alert" className="text-sm text-danger">
           {error instanceof Error ? error.message : "Could not load team visits"}

@@ -25,7 +25,7 @@ export function RequireFieldManager({ children }: { children: React.ReactNode })
   if (status !== "authenticated" || knownNotManager) {
     return (
       <main className="flex min-h-dvh flex-1 items-center justify-center">
-        <FieldPulseLoader />
+        <FieldPulseLoader prominent />
       </main>
     );
   }
@@ -48,7 +48,7 @@ export function RequireFieldManager({ children }: { children: React.ReactNode })
   if (fieldRole.isPending || !isManager) {
     return (
       <main className="flex min-h-dvh flex-1 items-center justify-center">
-        <FieldPulseLoader />
+        <FieldPulseLoader prominent />
       </main>
     );
   }

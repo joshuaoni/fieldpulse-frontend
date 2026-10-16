@@ -59,9 +59,6 @@ export function PushSetup() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium">Get reminders on this phone</p>
-          <p className="mt-0.5 text-sm text-muted">
-            Lorem Ipsum.
-          </p>
         </div>
 
         <Button variant="dark" onClick={turnOn} disabled={busy}>

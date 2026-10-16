@@ -19,7 +19,7 @@ export function RequireSession({ children }: { children: React.ReactNode }) {
   if (status !== "authenticated") {
     return (
       <main className="flex flex-1 items-center justify-center">
-        <FieldPulseLoader />
+        <FieldPulseLoader prominent />
       </main>
     );
   }

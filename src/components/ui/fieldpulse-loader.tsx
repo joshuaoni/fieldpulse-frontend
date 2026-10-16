@@ -13,27 +13,32 @@ const INK = "#102A3C";
 const CORNER_INK = "#111723";
 
 export function FieldPulseLoader({
-  size = 48,
+  size,
+  prominent = false,
   label = "Loading…",
   className = "",
 }: {
   size?: number;
+  prominent?: boolean;
   label?: string;
   className?: string;
 }) {
+  const width = size ?? (prominent ? 88 : 48);
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const glyphClip = `fp-glyph-${id}`;
   const cornerClip = `fp-corner-${id}`;
 
   return (
-    <div className={`fp-loader flex items-center justify-center p-5 ${className}`}>
+    <div
+      className={`fp-loader flex items-center justify-center ${prominent ? "p-5 py-16" : "p-5"} ${className}`}
+    >
       <span className="sr-only">{label}</span>
       <svg
         viewBox="0 0 87 88"
         fill="none"
         aria-hidden
-        width={size}
-        height={(size * 88) / 87}
+        width={width}
+        height={(width * 88) / 87}
       >
         <defs>
           <clipPath id={glyphClip}>

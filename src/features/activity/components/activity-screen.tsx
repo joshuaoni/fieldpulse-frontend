@@ -127,7 +127,7 @@ export function ActivityScreen() {
         </p>
       )}
 
-      {isPending && <FieldPulseLoader className="mt-6" />}
+      {isPending && <FieldPulseLoader prominent className="mt-6" />}
 
       {data && events.length === 0 && (
         <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">

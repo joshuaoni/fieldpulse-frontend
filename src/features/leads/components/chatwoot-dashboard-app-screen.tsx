@@ -79,14 +79,14 @@ export function ChatwootDashboardAppScreen() {
     error,
   } = useLeadEngagementByChatwootContact(contactId, status === "authenticated");
 
-  if (status === "loading") return <FieldPulseLoader className="p-4" />;
+  if (status === "loading") return <FieldPulseLoader prominent />;
   if (status === "anonymous") return <SignIn onSignedIn={() => void refresh()} />;
 
   if (!contactId) {
     return <p className="p-4 text-sm text-muted">Waiting for Chatwoot…</p>;
   }
 
-  if (isPending) return <FieldPulseLoader className="p-4" />;
+  if (isPending) return <FieldPulseLoader prominent />;
 
   if (isError) {
     const notFound = error instanceof ApiError && error.status === 404;
