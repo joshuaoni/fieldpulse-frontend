@@ -9,6 +9,7 @@ import { isRead, useReadState } from "../read-state";
 import { byDay, type FieldNotification, type NotificationRange } from "../types";
 import { NotificationFilters } from "./notification-filters";
 import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
+import { Pager, usePagedItems } from "@/components/ui/pager";
 
 const time = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -20,7 +21,8 @@ export function NotificationsScreen() {
   const { state, markRead, markAllRead } = useReadState();
 
   const unread = notifications.filter((item) => !isRead(state, item)).length;
-  const days = byDay(notifications);
+  const paged = usePagedItems(notifications, JSON.stringify(range));
+  const days = byDay(paged.pageItems);
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-5 py-6">
@@ -90,6 +92,8 @@ export function NotificationsScreen() {
           </ul>
         </section>
       ))}
+
+      <Pager page={paged.page} totalItems={paged.totalItems} onPageChange={paged.setPage} />
 
       {filtering && (
         <NotificationFilters

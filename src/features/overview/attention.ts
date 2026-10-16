@@ -11,7 +11,7 @@ export interface AttentionItem {
   title: string;
   detail: string;
   at: string;
-  href: string;
+  visitId: string;
 }
 
 export const ATTENTION_LABEL: Record<AttentionKind, string> = {
@@ -30,7 +30,7 @@ const fromCheckIn = (checkIn: CheckIn): AttentionItem => ({
   title: checkIn.lead.companyName,
   detail: `${checkIn.rep.firstName} — ${describeConcerns(checkIn)}`,
   at: checkIn.checkInAt,
-  href: `/visits/${checkIn.visitId}`,
+  visitId: checkIn.visitId,
 });
 
 const fromVisit = (visit: Visit): AttentionItem => ({
@@ -39,7 +39,7 @@ const fromVisit = (visit: Visit): AttentionItem => ({
   title: visit.lead.companyName,
   detail: `${pairLabel(visit)} — nobody checked in`,
   at: visit.scheduledFor ?? visit.updatedAt,
-  href: `/visits/${visit.id}`,
+  visitId: visit.id,
 });
 
 export function needsAttention({

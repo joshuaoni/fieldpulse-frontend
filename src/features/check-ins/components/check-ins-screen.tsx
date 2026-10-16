@@ -5,6 +5,7 @@ import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { pairLabel } from "@/lib/pairs";
 import { UnplannedBadge } from "@/components/unplanned-badge";
 import { useCheckIns } from "../hooks";
+import { Pager, usePagedItems } from "@/components/ui/pager";
 import { CheckInDetail } from "./check-in-detail";
 import {
   STATUS_LABEL,
@@ -64,6 +65,7 @@ export function CheckInsScreen() {
   const [openId, setOpenId] = useState<string | null>(null);
 
   const { data, isPending, isError, error } = useCheckIns({ ...range, status });
+  const paged = usePagedItems(data?.checkIns ?? [], status ?? "ALL");
   const counts = data?.counts;
   const open = data?.checkIns.find((checkIn) => checkIn.attendanceId === openId) ?? null;
 
@@ -121,7 +123,7 @@ export function CheckInsScreen() {
 
       {data && data.checkIns.length > 0 && (
         <ul className="mt-5 divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
-          {data.checkIns.map((checkIn) => (
+          {paged.pageItems.map((checkIn) => (
             <CheckInRow
               key={checkIn.attendanceId}
               checkIn={checkIn}
@@ -130,6 +132,8 @@ export function CheckInsScreen() {
           ))}
         </ul>
       )}
+
+      <Pager page={paged.page} totalItems={paged.totalItems} onPageChange={paged.setPage} />
 
       {open && <CheckInDetail checkIn={open} onClose={() => setOpenId(null)} />}
     </div>

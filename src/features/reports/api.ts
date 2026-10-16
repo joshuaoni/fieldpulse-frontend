@@ -1,4 +1,5 @@
 import { api, apiBlob } from "@/lib/api-client";
+import { PAGE_SIZE } from "@/components/ui/pager";
 import { windowOf, type ReportFilters, type ReportPage, type TeamOverview } from "./types";
 
 function params(filters: ReportFilters): URLSearchParams {
@@ -23,6 +24,7 @@ export async function fetchTeamOverview(range: ReportFilters["range"]): Promise<
 export async function fetchReports(filters: ReportFilters, page: number): Promise<ReportPage> {
   const query = params(filters);
   if (page > 1) query.set("page", String(page));
+  query.set("pageSize", String(PAGE_SIZE));
 
   return api<ReportPage>(`/api/reports?${query}`);
 }

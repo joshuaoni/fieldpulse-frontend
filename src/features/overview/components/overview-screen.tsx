@@ -14,6 +14,7 @@ import { pairLabel } from "@/lib/pairs";
 import { useSession } from "@/lib/session";
 import { useCheckIns } from "@/features/check-ins/hooks";
 import { useTeamVisits } from "@/features/visits/hooks";
+import { VisitDetailModal } from "@/features/visits/components/visit-detail-modal";
 import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 import {
   ATTENTION_BADGE,
@@ -45,6 +46,7 @@ const day = (iso: string) =>
 export function OverviewScreen() {
   const { user } = useSession();
   const [since] = useState(lastWeek);
+  const [openVisitId, setOpenVisitId] = useState<string | null>(null);
 
   const pairs = usePairs();
   const metrics = useTeamOverview("TODAY");
@@ -119,7 +121,7 @@ export function OverviewScreen() {
 
             <ul className="divide-y divide-border">
               {out.map((pair) => (
-                <ActiveRep key={pair.id} pair={pair} />
+                <ActiveRep key={pair.id} pair={pair} onOpenVisit={setOpenVisitId} />
               ))}
             </ul>
           </Panel>
@@ -133,7 +135,7 @@ export function OverviewScreen() {
 
             <ul className="divide-y divide-border">
               {(reports.data?.reports ?? []).slice(0, 5).map((report) => (
-                <RecentReport key={report.id} report={report} />
+                <RecentReport key={report.id} report={report} onOpenVisit={setOpenVisitId} />
               ))}
             </ul>
           </Panel>
@@ -158,7 +160,7 @@ export function OverviewScreen() {
 
           <ul className="divide-y divide-border">
             {attention.slice(0, 6).map((item) => (
-              <Attention key={item.id} item={item} />
+              <Attention key={item.id} item={item} onOpenVisit={setOpenVisitId} />
             ))}
           </ul>
 
@@ -169,6 +171,10 @@ export function OverviewScreen() {
           )}
         </Panel>
       </div>
+
+      {openVisitId && (
+        <VisitDetailModal visitId={openVisitId} onClose={() => setOpenVisitId(null)} />
+      )}
     </div>
   );
 }
@@ -201,7 +207,13 @@ function Panel({
   );
 }
 
-function ActiveRep({ pair }: { pair: SalesPair }) {
+function ActiveRep({
+  pair,
+  onOpenVisit,
+}: {
+  pair: SalesPair;
+  onOpenVisit: (visitId: string) => void;
+}) {
   const { done, total } = pair.day.progress;
   const complete = total > 0 && done === total;
 
@@ -215,9 +227,13 @@ function ActiveRep({ pair }: { pair: SalesPair }) {
 
         <p className="mt-1 truncate text-sm">
           {pair.day.current ? (
-            <Link href={`/visits/${pair.day.current.visitId}`} className="hover:underline">
+            <button
+              type="button"
+              onClick={() => onOpenVisit(pair.day.current!.visitId)}
+              className="hover:underline"
+            >
               {pair.day.current.companyName}
-            </Link>
+            </button>
           ) : (
             <span className="text-muted">Between stops</span>
           )}
@@ -238,13 +254,23 @@ function ActiveRep({ pair }: { pair: SalesPair }) {
   );
 }
 
-function Attention({ item }: { item: AttentionItem }) {
+function Attention({
+  item,
+  onOpenVisit,
+}: {
+  item: AttentionItem;
+  onOpenVisit: (visitId: string) => void;
+}) {
   return (
     <li className="flex items-start justify-between gap-3 px-5 py-4">
       <div className="min-w-0">
-        <Link href={item.href} className="block truncate font-medium hover:underline">
+        <button
+          type="button"
+          onClick={() => onOpenVisit(item.visitId)}
+          className="block max-w-full truncate text-left font-medium hover:underline"
+        >
           {item.title}
-        </Link>
+        </button>
         <p className="mt-0.5 text-sm text-muted">{item.detail}</p>
         <p className="mt-0.5 text-xs text-muted">{day(item.at)}</p>
       </div>
@@ -258,16 +284,23 @@ function Attention({ item }: { item: AttentionItem }) {
   );
 }
 
-function RecentReport({ report }: { report: FieldReport }) {
+function RecentReport({
+  report,
+  onOpenVisit,
+}: {
+  report: FieldReport;
+  onOpenVisit: (visitId: string) => void;
+}) {
   return (
     <li className="flex items-center justify-between gap-3 px-5 py-4">
       <div className="min-w-0">
-        <Link
-          href={`/visits/${report.visitId}`}
-          className="block truncate font-medium hover:underline"
+        <button
+          type="button"
+          onClick={() => onOpenVisit(report.visitId)}
+          className="block max-w-full truncate text-left font-medium hover:underline"
         >
           {report.lead.companyName}
-        </Link>
+        </button>
         <p className="mt-0.5 truncate text-sm text-muted">
           {pairLabel({ pairId: report.pair.id, pair: report.pair })} · {day(report.submittedAt)} at {time(report.submittedAt)}
         </p>

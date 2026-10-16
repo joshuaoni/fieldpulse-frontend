@@ -1,4 +1,5 @@
 import { api } from "@/lib/api-client";
+import { PAGE_SIZE } from "@/components/ui/pager";
 import type {
   ChatwootSyncResult,
   DiscoveryStarted,
@@ -44,6 +45,7 @@ export interface LeadFilters {
 export async function fetchLeads(filters: LeadFilters = {}): Promise<LeadPage> {
   const query = new URLSearchParams();
   if (filters.page && filters.page > 1) query.set("page", String(filters.page));
+  query.set("pageSize", String(PAGE_SIZE));
   if (filters.search) query.set("search", filters.search);
   if (filters.onlyNew) query.set("onlyNew", "true");
 

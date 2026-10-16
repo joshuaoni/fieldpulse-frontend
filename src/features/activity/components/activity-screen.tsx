@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { ListFilter, Search, X } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
 import { CHIP, CHIP_ON } from "@/components/ui/chip";
 import { useActivity } from "../hooks";
 import {
@@ -17,8 +16,7 @@ import {
 } from "../types";
 import { ActivityFiltersDialog } from "./activity-filters";
 import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
-
-const PAGE_SIZE = 50;
+import { Pager, usePageState } from "@/components/ui/pager";
 
 function when(iso: string): string {
   const at = new Date(iso);
@@ -40,11 +38,11 @@ function when(iso: string): string {
 export function ActivityScreen() {
   const [filters, setFilters] = useState<ActivityFilters>(NO_ACTIVITY_FILTERS);
   const [search, setSearch] = useState("");
-  const [shown, setShown] = useState(PAGE_SIZE);
   const [filtering, setFiltering] = useState(false);
 
   const applied: ActivityFilters = { ...filters, search: search.trim() || undefined };
-  const { data, isPending, isError, isFetching } = useActivity(applied, shown);
+  const [page, setPage] = usePageState(JSON.stringify(applied));
+  const { data, isPending, isError } = useActivity(applied, page);
 
   const chips = activityFilterCount(filters);
   const total = data?.pagination.totalItems ?? 0;
@@ -147,17 +145,7 @@ export function ActivityScreen() {
         </ul>
       )}
 
-      {events.length < total && (
-        <div className="mt-5 flex justify-center">
-          <Button
-            variant="outline"
-            onClick={() => setShown((count) => count + PAGE_SIZE)}
-            disabled={isFetching}
-          >
-            {isFetching ? "Loading…" : `Load more (${total - events.length} left)`}
-          </Button>
-        </div>
-      )}
+      <Pager page={page} totalItems={total} onPageChange={setPage} />
 
       {filtering && (
         <ActivityFiltersDialog

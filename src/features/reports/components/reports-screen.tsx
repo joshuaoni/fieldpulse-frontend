@@ -10,6 +10,7 @@ import { MemberAvatars } from "@/components/ui/member-avatars";
 import { OUTCOME_LABEL, OUTCOME_TONE } from "@/lib/outcomes";
 import { pairLabel } from "@/lib/pairs";
 import { useExportReports, useReports, useTeamOverview } from "../hooks";
+import { Pager, usePageState } from "@/components/ui/pager";
 import {
   DATE_RANGE_LABEL,
   NO_FILTERS,
@@ -32,7 +33,8 @@ export function ReportsScreen() {
   const applied: ReportFilters = { ...filters, search: search.trim() || undefined };
 
   const overview = useTeamOverview(filters.range);
-  const reports = useReports(applied, 1);
+  const [page, setPage] = usePageState(JSON.stringify(applied));
+  const reports = useReports(applied, page);
   const exporting = useExportReports();
 
   const chips = filterCount(filters);
@@ -183,10 +185,12 @@ export function ReportsScreen() {
           </ul>
         )}
 
-        {reports.data && reports.data.pagination.totalPages > 1 && (
-          <p className="mt-4 text-sm text-muted">
-            Showing {reports.data.reports.length} of {reports.data.pagination.totalItems}
-          </p>
+        {reports.data && (
+          <Pager
+            page={page}
+            totalItems={reports.data.pagination.totalItems}
+            onPageChange={setPage}
+          />
         )}
       </section>
 

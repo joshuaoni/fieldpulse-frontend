@@ -17,6 +17,7 @@ import {
 import { PendingActionsBanner } from "./pending-actions-banner";
 import { RouteCard } from "./route-card";
 import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
+import { PAGE_SIZE, Pager, usePagedItems } from "@/components/ui/pager";
 
 function todayIndex(weekStart: Date): number | null {
   const today = new Date();
@@ -44,6 +45,7 @@ export function MyWeekScreen() {
   const routes = plannedDays(days);
 
   const partners = partnersOf(stops, user?.id);
+  const paged = usePagedItems(stops, String(selected));
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-5 py-6">
@@ -135,10 +137,17 @@ export function MyWeekScreen() {
       )}
 
       <ul className="mt-3 flex flex-col gap-3">
-        {stops.map((visit, position) => (
-          <RouteCard key={visit.id} visit={visit} position={position} selfId={user?.id} />
+        {paged.pageItems.map((visit, index) => (
+          <RouteCard
+            key={visit.id}
+            visit={visit}
+            position={(paged.page - 1) * PAGE_SIZE + index}
+            selfId={user?.id}
+          />
         ))}
       </ul>
+
+      <Pager page={paged.page} totalItems={paged.totalItems} onPageChange={paged.setPage} />
 
     </main>
   );

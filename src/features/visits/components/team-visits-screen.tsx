@@ -6,7 +6,9 @@ import { useState } from "react";
 import { useTeamVisits } from "../hooks";
 import type { VisitStatus } from "../types";
 import { VisitList } from "./visit-list";
+import { VisitDetailModal } from "./visit-detail-modal";
 import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
+import { PAGE_SIZE, Pager, usePageState } from "@/components/ui/pager";
 
 const FILTERS: Array<{ label: string; status?: VisitStatus }> = [
   { label: "All" },
@@ -17,7 +19,9 @@ const FILTERS: Array<{ label: string; status?: VisitStatus }> = [
 
 export function TeamVisitsScreen() {
   const [status, setStatus] = useState<VisitStatus | undefined>(undefined);
-  const { data, isPending, isError, error } = useTeamVisits({ status });
+  const [openVisitId, setOpenVisitId] = useState<string | null>(null);
+  const [page, setPage] = usePageState(status ?? "ALL");
+  const { data, isPending, isError, error } = useTeamVisits({ status, page, pageSize: PAGE_SIZE });
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 py-8">
@@ -63,7 +67,16 @@ export function TeamVisitsScreen() {
           visits={data.visits}
           showPair
           emptyMessage="No visits for your team in this view."
+          onOpen={setOpenVisitId}
         />
+      )}
+
+      {data && (
+        <Pager page={page} totalItems={data.pagination.totalItems} onPageChange={setPage} />
+      )}
+
+      {openVisitId && (
+        <VisitDetailModal visitId={openVisitId} onClose={() => setOpenVisitId(null)} />
       )}
     </main>
   );
