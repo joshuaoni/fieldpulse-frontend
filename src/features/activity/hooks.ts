@@ -5,14 +5,13 @@ import * as activityApi from "./api";
 import type { ActivityFilters } from "./types";
 
 export const activityKeys = {
-  list: (filters: ActivityFilters, pageSize: number) =>
-    ["activity", filters, pageSize] as const,
+  list: (filters: ActivityFilters, page: number) => ["activity", filters, page] as const,
 };
 
-export function useActivity(filters: ActivityFilters, pageSize: number) {
+export function useActivity(filters: ActivityFilters, page: number) {
   return useQuery({
-    queryKey: activityKeys.list(filters, pageSize),
-    queryFn: () => activityApi.fetchActivity(filters, pageSize),
+    queryKey: activityKeys.list(filters, page),
+    queryFn: () => activityApi.fetchActivity(filters, page),
     staleTime: 30_000,
   });
 }

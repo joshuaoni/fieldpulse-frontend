@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { LogUnplannedVisit } from "./log-unplanned-visit";
 import { useMyFieldRole } from "@/lib/field-role";
@@ -12,6 +12,8 @@ import { myAttendance, type Visit } from "../types";
 import { repStatus } from "../week";
 import { RepAccountMenu } from "./rep-account-menu";
 import { RouteCard } from "./route-card";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
+import { PAGE_SIZE, Pager, usePagedItems } from "@/components/ui/pager";
 
 const ROLE_LABEL: Record<string, string> = {
   FIELD_REP: "Sales Rep",
@@ -31,13 +33,23 @@ function todayWindow(): { from: string; to: string } {
   return { from: start.toISOString(), to: end.toISOString() };
 }
 
-type Filter = "ALL" | "VISITED" | "NOT_VISITED";
+type Filter = "ALL" | "VISITED" | "NOT_VISITED" | "NOT_CHECKED_OUT";
 
 const FILTERS: Array<{ value: Filter; label: string }> = [
   { value: "ALL", label: "All" },
   { value: "VISITED", label: "Visited" },
   { value: "NOT_VISITED", label: "Not Visited" },
+  { value: "NOT_CHECKED_OUT", label: "Not checked out" },
 ];
+
+const checkedInAt = (iso: string) =>
+  new Date(iso).toLocaleString([], {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
 export function RepHomeScreen() {
   const { user } = useSession();
@@ -52,6 +64,11 @@ export function RepHomeScreen() {
   const window = useMemo(() => todayWindow(), []);
   const { data, isPending, isError } = useMyVisits({ ...window, pageSize: 100 });
   const pending = usePendingActions();
+  const openCheckIns = useMyVisits({ openCheckIn: true, pageSize: 100 });
+  const unclosed = useMemo(() => {
+    const at = (visit: Visit) => (user ? myAttendance(visit, user.id)?.checkInAt : null) ?? "";
+    return [...(openCheckIns.data?.visits ?? [])].sort((a, b) => at(a).localeCompare(at(b)));
+  }, [openCheckIns.data, user]);
 
   const visits = useMemo(
     () =>
@@ -86,6 +103,9 @@ export function RepHomeScreen() {
     const visited = repStatus(visit, user?.id) === "COMPLETED";
     return filter === "VISITED" ? visited : !visited;
   });
+
+  const shownPage = usePagedItems(shown, filter);
+  const unclosedPage = usePagedItems(unclosed);
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-5 py-6">
@@ -142,46 +162,132 @@ export function RepHomeScreen() {
         Log a visit that is not planned
       </button>
 
-      <div className="mt-3 flex gap-2">
+      <div className="-mx-5 mt-3 flex gap-2 overflow-x-auto px-5">
         {FILTERS.map(({ value, label }) => (
           <button
             key={value}
             type="button"
             onClick={() => setFilter(value)}
             aria-pressed={filter === value}
-            className={`min-h-9 rounded-full px-4 text-sm font-medium ${
+            className={`min-h-9 shrink-0 rounded-full px-4 text-sm font-medium ${
               filter === value
                 ? "bg-sidebar-active-bg text-sidebar-active-foreground"
                 : "border border-border bg-surface"
             }`}
           >
             {label}
+            {value === "NOT_CHECKED_OUT" && unclosed.length > 0 && ` (${unclosed.length})`}
           </button>
         ))}
       </div>
 
-      {isPending && <p className="mt-4 text-sm text-muted">Loading…</p>}
+      {filter === "NOT_CHECKED_OUT" ? (
+        <>
+          {openCheckIns.isPending && <FieldPulseLoader className="mt-4" />}
 
-      {isError && (
-        <p role="alert" className="mt-4 text-sm text-danger">
-          Could not load today&apos;s calls.
-        </p>
+          {openCheckIns.isError && (
+            <p role="alert" className="mt-4 text-sm text-danger">
+              Could not load your open check-ins.
+            </p>
+          )}
+
+          {openCheckIns.data && unclosed.length === 0 && (
+            <p className="mt-4 rounded-2xl border border-dashed border-border-strong p-6 text-center text-sm text-muted">
+              You have checked out of every visit.
+            </p>
+          )}
+
+          <ul className="mt-3 flex flex-col gap-3">
+            {unclosedPage.pageItems.map((visit) => (
+              <OpenCheckInCard
+                key={visit.id}
+                visit={visit}
+                checkInAt={user ? myAttendance(visit, user.id)?.checkInAt ?? null : null}
+              />
+            ))}
+          </ul>
+
+          <Pager
+            page={unclosedPage.page}
+            totalItems={unclosedPage.totalItems}
+            onPageChange={unclosedPage.setPage}
+          />
+        </>
+      ) : (
+        <>
+          {isPending && <FieldPulseLoader className="mt-4" />}
+
+          {isError && (
+            <p role="alert" className="mt-4 text-sm text-danger">
+              Could not load today&apos;s calls.
+            </p>
+          )}
+
+          {data && visits.length === 0 && <NoVisits />}
+
+          {data && visits.length > 0 && shown.length === 0 && (
+            <p className="mt-4 rounded-2xl border border-dashed border-border-strong p-6 text-center text-sm text-muted">
+              Nothing here under that filter.
+            </p>
+          )}
+
+          <ul className="mt-3 flex flex-col gap-3">
+            {shownPage.pageItems.map((visit, index) => (
+              <RouteCard
+                key={visit.id}
+                visit={visit}
+                position={(shownPage.page - 1) * PAGE_SIZE + index}
+                selfId={user?.id}
+              />
+            ))}
+          </ul>
+
+          <Pager
+            page={shownPage.page}
+            totalItems={shownPage.totalItems}
+            onPageChange={shownPage.setPage}
+          />
+        </>
       )}
-
-      {data && shown.length === 0 && (
-        <p className="mt-4 rounded-2xl border border-dashed border-border-strong p-6 text-center text-sm text-muted">
-          {visits.length === 0 ? "Nothing planned for today." : "Nothing here under that filter."}
-        </p>
-      )}
-
-      <ul className="mt-3 flex flex-col gap-3">
-        {shown.map((visit, position) => (
-          <RouteCard key={visit.id} visit={visit} position={position} selfId={user?.id} />
-        ))}
-      </ul>
 
       {logging && <LogUnplannedVisit onClose={() => setLogging(false)} />}
     </main>
+  );
+}
+
+function OpenCheckInCard({ visit, checkInAt }: { visit: Visit; checkInAt: string | null }) {
+  return (
+    <li>
+      <Link
+        href={`/visits/${visit.id}`}
+        className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-4 hover:bg-sunken"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-semibold">{visit.lead.companyName}</span>
+          {visit.lead.address && (
+            <span className="mt-0.5 block truncate text-sm text-muted">{visit.lead.address}</span>
+          )}
+          {checkInAt && (
+            <span className="mt-1 block text-sm text-muted">
+              Checked in {checkedInAt(checkInAt)}
+            </span>
+          )}
+        </span>
+
+        <span className="shrink-0 rounded-md bg-warning/10 px-2 py-1 text-xs/none font-medium text-warning-fg">
+          Not checked out
+        </span>
+        <ChevronRight size={18} aria-hidden className="shrink-0 text-muted" />
+      </Link>
+    </li>
+  );
+}
+
+function NoVisits() {
+  return (
+    <p className="mt-4 rounded-2xl border border-dashed border-border-strong p-6 text-center text-sm text-muted">
+      New visits will appear here when available.
+    </p>
   );
 }
 

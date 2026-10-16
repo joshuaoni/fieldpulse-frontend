@@ -134,11 +134,6 @@ export function DayActions({
             This removes all {stops.length} {stops.length === 1 ? "stop" : "stops"} from{" "}
             {DAY_NAMES[dayIndex]}, leaving the day empty.
           </p>
-          {plan.status === "PUBLISHED" && (
-            <p className="mt-3 text-muted">
-              This plan is published, so the reps will see the day emptied on their next sync.
-            </p>
-          )}
         </ConfirmDialog>
       )}
     </div>

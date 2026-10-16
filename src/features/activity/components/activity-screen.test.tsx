@@ -168,26 +168,23 @@ describe("narrowing the log", () => {
   });
 });
 
-/**
- * A feed is read downwards, so more rows are added to what is already there
- * rather than replacing it a page at a time.
- */
+/** Pages like every other list in the app. */
 describe("reading further back", () => {
-  it("widens the window rather than stepping through pages", async () => {
+  it("steps to the next page", async () => {
     fetchActivity.mockResolvedValue(
-      page({ pagination: { page: 1, pageSize: 50, totalItems: 120, totalPages: 3 } }),
+      page({ pagination: { page: 1, pageSize: 20, totalItems: 120, totalPages: 6 } }),
     );
     show();
 
-    fireEvent.click(await screen.findByText(/Load more/));
+    fireEvent.click(await screen.findByLabelText("Next page"));
 
-    await waitFor(() => expect(fetchActivity).toHaveBeenCalledWith(expect.anything(), 100));
+    await waitFor(() => expect(fetchActivity).toHaveBeenCalledWith(expect.anything(), 2));
   });
 
-  it("offers nothing more to load once everything is shown", async () => {
+  it("offers no pages once everything fits on one", async () => {
     show();
 
     await screen.findByText("Report submitted");
-    expect(screen.queryByText(/Load more/)).toBeNull();
+    expect(screen.queryByLabelText("Next page")).toBeNull();
   });
 });

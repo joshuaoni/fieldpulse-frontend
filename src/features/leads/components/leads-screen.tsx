@@ -4,11 +4,13 @@ import { useState } from "react";
 import { Eye, Search } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { useLeads } from "../hooks";
+import { Pager, usePageState } from "@/components/ui/pager";
 import { sourcesOf, type DiscoverySummary, type Lead } from "../types";
 import { EnrichmentControl } from "./enrichment-control";
 import { BADGE, SourceChips, StateBadge } from "./lead-badges";
 import { LeadDetail } from "./lead-detail";
 import { SearchTargetsTab } from "./search-targets-tab";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 const ago = (iso: string) => {
   const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
@@ -123,7 +125,9 @@ function LeadsTab({ tab, onTab }: { tab: Tab; onTab: (tab: Tab) => void }) {
   const [onlyNew, setOnlyNew] = useState(false);
   const [open, setOpen] = useState<Lead | null>(null);
 
+  const [page, setPage] = usePageState(JSON.stringify([search.trim(), onlyNew]));
   const { data, isPending, isError, error } = useLeads({
+    page,
     search: search.trim() || undefined,
     onlyNew,
   });
@@ -169,7 +173,7 @@ function LeadsTab({ tab, onTab }: { tab: Tab; onTab: (tab: Tab) => void }) {
         </p>
       )}
 
-      {isPending && <p className="mt-6 text-sm text-muted">Loading…</p>}
+      {isPending && <FieldPulseLoader className="mt-6" />}
 
       {data?.leads.length === 0 && (
         <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
@@ -215,10 +219,8 @@ function LeadsTab({ tab, onTab }: { tab: Tab; onTab: (tab: Tab) => void }) {
         </div>
       )}
 
-      {data && data.pagination.totalPages > 1 && (
-        <p className="mt-3 text-sm text-muted">
-          Showing {data.leads.length} of {data.pagination.totalItems}
-        </p>
+      {data && (
+        <Pager page={page} totalItems={data.pagination.totalItems} onPageChange={setPage} />
       )}
 
       {open && <LeadDetail lead={open} onClose={() => setOpen(null)} />}

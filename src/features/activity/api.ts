@@ -1,11 +1,12 @@
 import { api } from "@/lib/api-client";
+import { PAGE_SIZE } from "@/components/ui/pager";
 import type { ActivityFilters, ActivityPage } from "./types";
 
 export async function fetchActivity(
   filters: ActivityFilters,
-  pageSize: number,
+  page: number,
 ): Promise<ActivityPage> {
-  const query = new URLSearchParams({ pageSize: String(pageSize) });
+  const query = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
 
   for (const action of filters.actions) query.append("action", action);
   for (const entityType of filters.entityTypes) query.append("entityType", entityType);

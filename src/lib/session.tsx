@@ -1,6 +1,15 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { fetchMe, logout as clearSession } from "@/features/auth/api";
 import type { AuthUser } from "@/features/auth/types";
 // import { isAllowedUser } from "./access";
@@ -36,30 +45,39 @@ async function resolveSession(): Promise<AuthUser | null> {
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<SessionStatus>("loading");
   const [user, setUser] = useState<AuthUser | null>(null);
+  const queryClient = useQueryClient();
+  const signedInAs = useRef<string | null | undefined>(undefined);
+
+  const adopt = useCallback(
+    (resolved: AuthUser | null) => {
+      const id = resolved?.id ?? null;
+      if (signedInAs.current !== undefined && signedInAs.current !== id) queryClient.clear();
+      signedInAs.current = id;
+
+      setUser(resolved);
+      setStatus(resolved ? "authenticated" : "anonymous");
+    },
+    [queryClient],
+  );
 
   const refresh = useCallback(async () => {
-    const resolved = await resolveSession();
-    setUser(resolved);
-    setStatus(resolved ? "authenticated" : "anonymous");
-  }, []);
+    adopt(await resolveSession());
+  }, [adopt]);
 
   const signOut = useCallback(() => {
     clearSession();
-    setUser(null);
-    setStatus("anonymous");
-  }, []);
+    adopt(null);
+  }, [adopt]);
 
   useEffect(() => {
     let active = true;
     void resolveSession().then((resolved) => {
-      if (!active) return;
-      setUser(resolved);
-      setStatus(resolved ? "authenticated" : "anonymous");
+      if (active) adopt(resolved);
     });
     return () => {
       active = false;
     };
-  }, []);
+  }, [adopt]);
 
   const value = useMemo(
     () => ({ status, user, refresh, signOut }),

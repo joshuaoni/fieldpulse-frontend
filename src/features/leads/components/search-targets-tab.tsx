@@ -13,6 +13,8 @@ import {
 import type { SearchTarget } from "../types";
 import { BADGE } from "./lead-badges";
 import { SearchTargetForm } from "./search-target-form";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
+import { Pager, usePagedItems } from "@/components/ui/pager";
 
 const ago = (iso: string) => {
   const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
@@ -29,6 +31,7 @@ export function SearchTargetsTab() {
   const targets = data?.searchTargets;
   const scrapingRunId = targets?.find((target) => target.apifyRunId)?.apifyRunId ?? null;
   const collecting = useCollecting(scrapingRunId);
+  const paged = usePagedItems(targets ?? []);
 
   return (
     <>
@@ -55,7 +58,7 @@ export function SearchTargetsTab() {
         </p>
       )}
 
-      {isPending && <p className="mt-6 text-sm text-muted">Loading…</p>}
+      {isPending && <FieldPulseLoader className="mt-6" />}
 
       {targets?.length === 0 && (
         <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
@@ -87,7 +90,7 @@ export function SearchTargetsTab() {
             </thead>
 
             <tbody className="divide-y divide-border">
-              {targets.map((target) => (
+              {paged.pageItems.map((target) => (
                 <TargetRow
                   key={target.id}
                   target={target}
@@ -98,6 +101,8 @@ export function SearchTargetsTab() {
           </table>
         </div>
       )}
+
+      <Pager page={paged.page} totalItems={paged.totalItems} onPageChange={paged.setPage} />
 
       {adding && <SearchTargetForm onClose={() => setAdding(false)} />}
     </>

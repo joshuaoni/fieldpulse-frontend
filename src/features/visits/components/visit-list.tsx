@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { pairLabel } from "@/lib/pairs";
 import type { Visit } from "../types";
 import { UnplannedBadge } from "@/components/unplanned-badge";
@@ -25,10 +24,12 @@ export function VisitList({
   visits,
   emptyMessage,
   showPair = false,
+  onOpen,
 }: {
   visits: Visit[];
   emptyMessage: string;
   showPair?: boolean;
+  onOpen: (visitId: string) => void;
 }) {
   if (visits.length === 0) {
     return (
@@ -42,9 +43,10 @@ export function VisitList({
     <ul className="space-y-2">
       {visits.map((visit) => (
         <li key={visit.id}>
-          <Link
-            href={`/visits/${visit.id}`}
-            className="flex min-h-11 items-center gap-3 rounded-xl border border-border bg-surface p-4"
+          <button
+            type="button"
+            onClick={() => onOpen(visit.id)}
+            className="flex min-h-11 w-full items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left"
           >
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{visit.lead.companyName}</p>
@@ -55,7 +57,7 @@ export function VisitList({
             </div>
             <UnplannedBadge planId={visit.planId} />
             <VisitStatusBadge status={visit.status} />
-          </Link>
+          </button>
         </li>
       ))}
     </ul>

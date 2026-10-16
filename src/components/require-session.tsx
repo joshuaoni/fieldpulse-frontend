@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSession } from "@/lib/session";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 /**
  * Gate for any screen that needs a signed-in user.
@@ -18,7 +19,7 @@ export function RequireSession({ children }: { children: React.ReactNode }) {
   if (status !== "authenticated") {
     return (
       <main className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted">Loading…</p>
+        <FieldPulseLoader />
       </main>
     );
   }

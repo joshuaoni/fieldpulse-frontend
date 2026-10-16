@@ -16,8 +16,10 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MemberAvatars } from "@/components/ui/member-avatars";
 import { pairLabel } from "@/lib/pairs";
 import { usePairs, useSetPairActive } from "../hooks";
+import { Pager, usePagedItems } from "@/components/ui/pager";
 import { matchesRep, openMembers, type SalesPair } from "../types";
 import { PairingForm } from "./pairing-form";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 function startOfDay(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
@@ -59,6 +61,7 @@ export function PairsScreen() {
     () => (pairs ?? []).filter((pair) => matchesRep(pair, term)),
     [pairs, term],
   );
+  const paged = usePagedItems(shown, JSON.stringify([term, showArchived, asParam(day)]));
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
@@ -115,7 +118,7 @@ export function PairsScreen() {
         </p>
       )}
 
-      {isPending && <p className="mt-6 text-sm text-muted">Loading…</p>}
+      {isPending && <FieldPulseLoader className="mt-6" />}
 
       {pairs && shown.length === 0 && (
         <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
@@ -144,7 +147,7 @@ export function PairsScreen() {
             </thead>
 
             <tbody className="divide-y divide-border">
-              {shown.map((pair) => (
+              {paged.pageItems.map((pair) => (
                 <PairRow
                   key={pair.id}
                   pair={pair}
@@ -160,6 +163,8 @@ export function PairsScreen() {
           </table>
         </div>
       )}
+
+      <Pager page={paged.page} totalItems={paged.totalItems} onPageChange={paged.setPage} />
 
       {editing && <PairingForm pair={editing.pair} onClose={() => setEditing(null)} />}
 

@@ -7,6 +7,7 @@ import { pairLabel } from "@/lib/pairs";
 import { useLeadEngagement, useSyncChatwoot } from "../hooks";
 import { sourcesOf, type Lead } from "../types";
 import { OutcomeBadge, SourceChips } from "./lead-badges";
+import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
@@ -56,7 +57,7 @@ export function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void 
       <section className="mt-6">
         <h3 className="font-semibold">Visit history</h3>
 
-        {engagement.isPending && <p className="mt-2 text-sm text-muted">Loading…</p>}
+        {engagement.isPending && <FieldPulseLoader className="mt-2" />}
 
         {engagement.data?.visits.length === 0 && (
           <p className="mt-2 text-sm text-muted">Nobody has visited this lead yet.</p>
