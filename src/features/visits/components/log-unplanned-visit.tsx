@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { LeadPicker } from "@/components/lead-picker";
 import { useLogUnplannedVisit } from "../hooks";
+import { visitHref } from "../href";
 
 export function LogUnplannedVisit({ onClose }: { onClose: () => void }) {
   const router = useRouter();
@@ -16,7 +17,7 @@ export function LogUnplannedVisit({ onClose }: { onClose: () => void }) {
     try {
       const visit = await log.mutateAsync(leadId);
       onClose();
-      router.push(`/visits/${visit.id}`);
+      router.push(visitHref(visit.id));
     } catch {
       // Shown from the mutation below rather than swallowed.
     }

@@ -1,5 +1,6 @@
 import { describeConcerns, type CheckIn } from "@/features/check-ins/types";
 import type { Visit } from "@/features/visits/types";
+import { visitHref } from "@/features/visits/href";
 import { pairLabel } from "@/lib/pairs";
 import type { SalesPair } from "@/features/pairs/types";
 
