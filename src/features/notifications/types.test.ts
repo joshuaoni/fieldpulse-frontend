@@ -66,7 +66,7 @@ describe("what reaches a rep's notifications", () => {
     });
 
     expect(feed[0].body).toBe("Your report for Bright Field Ltd was submitted successfully.");
-    expect(feed[0].href).toBe("/visits/visit-1");
+    expect(feed[0].href).toBe("/visits?id=visit-1");
   });
 
   it("says nothing about a report the partner filed", () => {

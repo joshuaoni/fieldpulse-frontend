@@ -9,6 +9,7 @@ import { useMyFieldRole } from "@/lib/field-role";
 import { useSession } from "@/lib/session";
 import { usePendingActions, useMyVisits, useQueueFlush } from "../hooks";
 import { myAttendance, type Visit } from "../types";
+import { visitHref } from "../href";
 import { repStatus } from "../week";
 import { RepAccountMenu } from "./rep-account-menu";
 import { RouteCard } from "./route-card";
@@ -344,7 +345,7 @@ function FocusCard({ visit, live }: { visit: Visit | null; live: boolean }) {
         </div>
 
         <Link
-          href={`/visits/${visit.id}`}
+          href={visitHref(visit.id)}
           className="shrink-0 rounded-lg bg-surface px-4 py-2.5 text-sm font-medium text-foreground"
         >
           {live ? "Check Out" : "Check In"}

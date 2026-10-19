@@ -2,6 +2,7 @@
 
 import { pairLabel } from "@/lib/pairs";
 import type { Visit } from "../types";
+import { visitHref } from "../href";
 import { UnplannedBadge } from "@/components/unplanned-badge";
 import { VisitStatusBadge } from "./visit-status-badge";
 

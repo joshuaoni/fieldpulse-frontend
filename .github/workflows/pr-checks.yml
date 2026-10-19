@@ -1,0 +1,48 @@
+name: PR Checks
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+    branches:
+      - staging
+      - main
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".gitignore"
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: npm ci
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build check
+        # Placeholder URLs: the build only needs the variables to be present.
+        run: npm run build
+        env:
+          NEXT_PUBLIC_FIELDPULSE_API_URL: https://fieldpulse-be.example.invalid
+          NEXT_PUBLIC_ERP_API_URL: https://erp-api.example.invalid
