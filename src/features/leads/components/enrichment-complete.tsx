@@ -50,13 +50,6 @@ export function EnrichmentComplete({
         </p>
       )}
 
-      {summary.cappedAt !== undefined && (
-        <p className="mt-3 text-sm text-muted">
-          This run stopped at its cap of {summary.cappedAt}. More leads are waiting — run enrichment
-          again to reach them.
-        </p>
-      )}
-
       <div className="mt-8 flex justify-end">
         <Button variant="dark" onClick={onClose}>
           Done
