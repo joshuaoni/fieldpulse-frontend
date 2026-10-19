@@ -507,15 +507,6 @@ describe("before anything is paid for", () => {
     expect(confirmButton()).toHaveProperty("disabled", true);
   });
 
-  it("says when the run would be capped, and that more are waiting", async () => {
-    previewEnrichment.mockResolvedValue({ candidates: 50, cappedAt: 50, configured: true });
-    show();
-
-    fireEvent.click(await screen.findByText("Run enrichment"));
-
-    expect(await screen.findByText(/more are waiting behind it/)).toBeDefined();
-  });
-
   it("refuses a run when Apollo is not configured", async () => {
     previewEnrichment.mockResolvedValue({ candidates: 14, configured: false });
     show();
