@@ -156,16 +156,16 @@ function RunEnrichmentConfirm({
                 <span className="font-medium">
                   {preview.data.candidates} {preview.data.candidates === 1 ? "lead" : "leads"}
                 </span>{" "}
-                on Apollo. Each lookup is billed, whether or not it finds anything.
+                on Apollo. 
               </>
             )}
           </p>
 
-          {preview.data.cappedAt !== undefined && (
+          {/* {preview.data.cappedAt !== undefined && (
             <p className="mt-3 text-muted">
               That is the per-run cap — more are waiting behind it, and will need another run.
             </p>
-          )}
+          )} */}
         </>
       )}
     </ConfirmDialog>

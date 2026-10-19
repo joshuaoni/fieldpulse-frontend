@@ -382,7 +382,6 @@ describe("before anything is paid for", () => {
     fireEvent.click(await screen.findByText("Run enrichment"));
 
     expect(await screen.findByText(/14 leads/)).toBeDefined();
-    expect(screen.getByRole("dialog").textContent).toContain("Each lookup is billed");
   });
 
   it("starts a run once confirmed", async () => {
