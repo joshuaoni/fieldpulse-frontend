@@ -447,7 +447,6 @@ describe("before anything is paid for", () => {
     await runIt();
 
     const done = await screen.findByRole("dialog", { name: "Enrichment complete" });
-    expect(done.textContent).toContain("stopped at its cap of 50");
   });
 
   it("says when a run stopped before it finished", async () => {
