@@ -2,7 +2,8 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import * as reportsApi from "./api";
-import type { DateRange, ReportFilters } from "./types";
+import type { DateRange } from "@/lib/date-range";
+import type { ReportFilters } from "./types";
 
 export const reportKeys = {
   overview: (range: DateRange) => ["reports", "overview", range] as const,

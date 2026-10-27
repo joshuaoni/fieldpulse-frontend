@@ -62,12 +62,44 @@ export function needsAttention({
 export const hasStarted = (pair: SalesPair): boolean =>
   pair.day.current !== null || pair.day.progress.done > 0;
 
-export function dayTotals(pairs: SalesPair[]): { done: number; total: number } {
-  return pairs.reduce(
-    (running, pair) => ({
-      done: running.done + pair.day.progress.done,
-      total: running.total + pair.day.progress.total,
-    }),
-    { done: 0, total: 0 },
-  );
+export interface WorkedPair {
+  pair: SalesPair;
+  visits: number;
+  last: { visitId: string; companyName: string; at: string };
+}
+
+/**
+ * Which pairs worked in a past range, read off its check-ins.
+ */
+export function workedPairs(roster: SalesPair[], checkIns: CheckIn[]): WorkedPair[] {
+  const byPair = new Map<string, { visits: Set<string>; last: CheckIn }>();
+
+  for (const checkIn of checkIns) {
+    const held = byPair.get(checkIn.pairId);
+    if (!held) {
+      byPair.set(checkIn.pairId, { visits: new Set([checkIn.visitId]), last: checkIn });
+      continue;
+    }
+    held.visits.add(checkIn.visitId);
+    if (checkIn.checkInAt > held.last.checkInAt) held.last = checkIn;
+  }
+
+  return roster
+    .flatMap((pair) => {
+      const held = byPair.get(pair.id);
+      return held
+        ? [
+            {
+              pair,
+              visits: held.visits.size,
+              last: {
+                visitId: held.last.visitId,
+                companyName: held.last.lead.companyName,
+                at: held.last.checkInAt,
+              },
+            },
+          ]
+        : [];
+    })
+    .sort((a, b) => b.visits - a.visits);
 }

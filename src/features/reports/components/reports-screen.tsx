@@ -11,8 +11,9 @@ import { OUTCOME_LABEL, OUTCOME_TONE } from "@/lib/outcomes";
 import { pairLabel } from "@/lib/pairs";
 import { useExportReports, useReports, useTeamOverview } from "../hooks";
 import { Pager, usePageState } from "@/components/ui/pager";
+import { DateRangeFilter } from "@/components/ui/date-range-filter";
+import { rangeLabel, rangePhrase } from "@/lib/date-range";
 import {
-  DATE_RANGE_LABEL,
   NO_FILTERS,
   filterCount,
   type FieldReport,
@@ -45,8 +46,15 @@ export function ReportsScreen() {
 
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Reports</h1>
-        <p className="mt-1 text-sm text-muted">{DATE_RANGE_LABEL[filters.range]}</p>
+        <p className="mt-1 text-sm text-muted">{rangeLabel(filters.range)}</p>
       </header>
+
+      <div className="mt-5">
+        <DateRangeFilter
+          value={filters.range}
+          onChange={(range) => setFilters({ ...filters, range })}
+        />
+      </div>
 
       <h2 className="mt-7 text-base font-semibold">Team overview</h2>
 
@@ -173,7 +181,7 @@ export function ReportsScreen() {
 
         {reports.data?.reports.length === 0 && (
           <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
-            No reports match what you are looking for.
+            No reports {rangePhrase(filters.range)} match what you are looking for.
           </p>
         )}
 

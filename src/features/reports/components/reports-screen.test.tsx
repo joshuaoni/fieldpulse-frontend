@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { isoDay } from "@/lib/date-range";
 import { ReportsScreen } from "./reports-screen";
 import type { FieldReport, ReportPage, TeamOverview } from "../types";
 
@@ -213,15 +214,38 @@ describe("filtering", () => {
   });
 
   it("applies a date range", async () => {
-    await openFilters();
+    show();
 
-    await screen.findByRole("dialog");
-    fireEvent.click(chip("Today"));
-    fireEvent.click(chip("Apply filters"));
+    fireEvent.click(await screen.findByRole("button", { name: "Today" }));
 
     await waitFor(() =>
       expect(fetchReports).toHaveBeenCalledWith(
-        expect.objectContaining({ range: "TODAY" }),
+        expect.objectContaining({ range: { preset: "TODAY" } }),
+        1,
+      ),
+    );
+  });
+
+  it("applies a custom range once both days are set", async () => {
+    show();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Custom range" }));
+    fireEvent.click(screen.getByRole("button", { name: /–/ }));
+
+    // The calendar opens on the month on show. Tapping the later day first
+    // checks the range is put in order rather than refused.
+    const calendar = within(screen.getByRole("dialog", { name: "Choose dates" }));
+    const tap = (date: string) =>
+      fireEvent.click(calendar.getAllByText(date).find((cell) => cell.tagName === "BUTTON")!);
+    tap("9");
+    tap("3");
+
+    const now = new Date();
+    const day = (date: number) => isoDay(new Date(now.getFullYear(), now.getMonth(), date));
+
+    await waitFor(() =>
+      expect(fetchReports).toHaveBeenCalledWith(
+        expect.objectContaining({ range: { preset: "CUSTOM", from: day(3), to: day(9) } }),
         1,
       ),
     );
@@ -276,7 +300,7 @@ describe("exporting", () => {
     fetchReports.mockResolvedValue(page({ reports: [] }));
     show();
 
-    await screen.findByText(/No reports match/);
+    await screen.findByText(/No reports this month match/);
     expect(screen.getByText("Export report").closest("button")).toHaveProperty(
       "disabled",
       true,

@@ -52,6 +52,19 @@
   --border-strong: #d1d5dc;
 
   --control-edge: #8c9bb0;
+
+  --calendar-bg: #f3f5f8;
+  --calendar-edge: #b5c0cf;
+  --calendar-accent: #1447e6;
+  --calendar-range: #ebf3ff;
+  --calendar-cell: #ffffff;
+  --calendar-cell-edge: #e7ebf0;
+  --calendar-title: #111723;
+  --calendar-hint: #8896a5;
+  --calendar-outside: #c2ccd9;
+  --calendar-field-text: #102a3c;
+  --calendar-field-placeholder: #7890a2;
+  --calendar-shadow: rgb(16 42 60 / 0.16);
 }
 
 @theme inline {
@@ -85,6 +98,18 @@
   --color-chip-active-bg: var(--chip-active-bg);
   --color-chip-active-edge: var(--chip-active-edge);
   --color-border-strong: var(--border-strong);
+  --color-calendar-bg: var(--calendar-bg);
+  --color-calendar-edge: var(--calendar-edge);
+  --color-calendar-accent: var(--calendar-accent);
+  --color-calendar-range: var(--calendar-range);
+  --color-calendar-cell: var(--calendar-cell);
+  --color-calendar-cell-edge: var(--calendar-cell-edge);
+  --color-calendar-title: var(--calendar-title);
+  --color-calendar-hint: var(--calendar-hint);
+  --color-calendar-outside: var(--calendar-outside);
+  --color-calendar-field-text: var(--calendar-field-text);
+  --color-calendar-field-placeholder: var(--calendar-field-placeholder);
+  --color-calendar-shadow: var(--calendar-shadow);
   --font-sans: var(--font-dm-sans);
 }
 
