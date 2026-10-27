@@ -5,14 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CHIP, CHIP_OFF, CHIP_ON } from "@/components/ui/chip";
 import { Modal } from "@/components/ui/modal";
 import { OUTCOMES, OUTCOME_LABEL, type VisitOutcome } from "@/lib/outcomes";
-import {
-  DATE_RANGE_LABEL,
-  NO_FILTERS,
-  type DateRange,
-  type ReportFilters,
-} from "../types";
-
-const RANGES: DateRange[] = ["TODAY", "WEEK", "MONTH"];
+import { NO_FILTERS, type ReportFilters } from "../types";
 
 export function ReportFiltersDialog({
   filters,
@@ -64,22 +57,10 @@ export function ReportFiltersDialog({
         </Group>
       )}
 
-      <Group label="By date">
-        {RANGES.map((range) => (
-          <Chip
-            key={range}
-            selected={draft.range === range}
-            onClick={() => setDraft({ ...draft, range })}
-          >
-            {DATE_RANGE_LABEL[range]}
-          </Chip>
-        ))}
-      </Group>
-
       <div className="mt-8 flex justify-end gap-3">
         <Button
           variant="outline"
-          onClick={() => setDraft({ ...NO_FILTERS, search: draft.search })}
+          onClick={() => setDraft({ ...NO_FILTERS, range: draft.range, search: draft.search })}
         >
           Clear filters
         </Button>

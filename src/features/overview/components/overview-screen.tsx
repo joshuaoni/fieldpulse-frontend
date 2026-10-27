@@ -16,26 +16,22 @@ import { useCheckIns } from "@/features/check-ins/hooks";
 import { useTeamVisits } from "@/features/visits/hooks";
 import { VisitDetailModal } from "@/features/visits/components/visit-detail-modal";
 import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
+import { DateRangeFilter } from "@/components/ui/date-range-filter";
+import {
+  TODAY,
+  inclusiveWindowOf,
+  rangePhrase,
+  type DateRange,
+} from "@/lib/date-range";
 import {
   ATTENTION_BADGE,
   ATTENTION_LABEL,
-  dayTotals,
   hasStarted,
   needsAttention,
+  workedPairs,
   type AttentionItem,
+  type WorkedPair,
 } from "../attention";
-
-/** The window the attention panel asks about: a missed visit is never today. */
-function lastWeek(): { from: string; to: string } {
-  const to = new Date();
-  to.setHours(0, 0, 0, 0);
-  to.setDate(to.getDate() + 1);
-
-  const from = new Date(to);
-  from.setDate(from.getDate() - 7);
-
-  return { from: from.toISOString(), to: to.toISOString() };
-}
 
 const time = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -45,27 +41,40 @@ const day = (iso: string) =>
 
 export function OverviewScreen() {
   const { user } = useSession();
-  const [since] = useState(lastWeek);
+  const [range, setRange] = useState<DateRange>(TODAY);
   const [openVisitId, setOpenVisitId] = useState<string | null>(null);
+  const period = inclusiveWindowOf(range);
+
+  const live = range.preset === "TODAY";
 
   const pairs = usePairs();
-  const metrics = useTeamOverview("TODAY");
-  const reports = useReports(NO_FILTERS, 1);
-  const flagged = useCheckIns({ ...since, status: "FLAGGED" });
-  const missed = useTeamVisits({ ...since, status: "MISSED", pageSize: 50 });
+  const metrics = useTeamOverview(range);
+  const reports = useReports({ ...NO_FILTERS, range }, 1);
+  const checkIns = useCheckIns(period);
+  const missed = useTeamVisits({ ...period, status: "MISSED", pageSize: 50 });
+  const scheduled = useTeamVisits({ ...period, issued: true, pageSize: 1 });
+  const completed = useTeamVisits({ ...period, issued: true, status: "COMPLETED", pageSize: 1 });
 
   const roster = (pairs.data ?? []).filter((pair) => pair.isActive);
-  const out = roster.filter(hasStarted);
-  const visits = dayTotals(roster);
+  const worked = workedPairs(roster, checkIns.data?.checkIns ?? []);
+  const out = live ? roster.filter(hasStarted) : worked.map(({ pair }) => pair);
+
+  const visits = scheduled.data &&
+    completed.data && {
+      done: completed.data.pagination.totalItems,
+      total: scheduled.data.pagination.totalItems,
+    };
+  const activeReady = live ? pairs.data : pairs.data && checkIns.data;
 
   const attention = needsAttention({
-    flagged: flagged.data?.checkIns ?? [],
+    flagged: (checkIns.data?.checkIns ?? []).filter((checkIn) => checkIn.status === "FLAGGED"),
     visits: missed.data?.visits ?? [],
   });
 
   const conversion = metrics.data?.conversionRate;
   const conversionUp =
     conversion && conversion.previous !== null && conversion.value > conversion.previous;
+  const phrase = rangePhrase(range);
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
@@ -73,18 +82,24 @@ export function OverviewScreen() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Hello, {user?.firstName ?? "there"} <span aria-hidden>👋</span>
         </h1>
-        <p className="mt-1 text-sm text-muted">Here&apos;s how your field teams are doing today.</p>
+        <p className="mt-1 text-sm text-muted">
+          Here&apos;s how your field teams {live ? "are doing" : "did"} {phrase}.
+        </p>
       </header>
+
+      <div className="mt-5">
+        <DateRangeFilter value={range} onChange={setRange} />
+      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Active pairs"
-          value={pairs.data ? `${out.length} / ${roster.length}` : "—"}
+          value={activeReady ? `${out.length} / ${roster.length}` : "—"}
           icon={<Users size={30} aria-hidden className="shrink-0 text-accent" />}
         />
         <StatCard
-          label="Visits today"
-          value={pairs.data ? `${visits.done} / ${visits.total}` : "—"}
+          label={live ? "Visits today" : "Visits"}
+          value={visits ? `${visits.done} / ${visits.total}` : "—"}
           icon="/icons/visits.svg"
         />
         <StatCard
@@ -113,16 +128,28 @@ export function OverviewScreen() {
       <div className="mt-5 grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
         <div className="flex flex-col gap-5">
           <Panel title="Active reps" href="/manager/pairs">
-            {pairs.isPending && <FieldPulseLoader className="p-5 pt-0" />}
+            {!activeReady && <FieldPulseLoader className="p-5 pt-0" />}
 
-            {pairs.data && out.length === 0 && (
-              <p className="p-5 pt-0 text-sm text-muted">Nobody has started their day yet.</p>
+            {checkIns.isError && !live && (
+              <p role="alert" className="p-5 pt-0 text-sm text-danger">
+                Could not load the check-ins.
+              </p>
+            )}
+
+            {activeReady && out.length === 0 && (
+              <p className="p-5 pt-0 text-sm text-muted">
+                {live ? "Nobody has started their day yet." : `Nobody checked in ${phrase}.`}
+              </p>
             )}
 
             <ul className="divide-y divide-border">
-              {out.map((pair) => (
-                <ActiveRep key={pair.id} pair={pair} onOpenVisit={setOpenVisitId} />
-              ))}
+              {live
+                ? out.map((pair) => (
+                    <ActiveRep key={pair.id} pair={pair} onOpenVisit={setOpenVisitId} />
+                  ))
+                : worked.map((work) => (
+                    <WorkedPairRow key={work.pair.id} work={work} onOpenVisit={setOpenVisitId} />
+                  ))}
             </ul>
           </Panel>
 
@@ -130,7 +157,9 @@ export function OverviewScreen() {
             {reports.isPending && <FieldPulseLoader className="p-5 pt-0" />}
 
             {reports.data && reports.data.reports.length === 0 && (
-              <p className="p-5 pt-0 text-sm text-muted">No visits have been written up yet.</p>
+              <p className="p-5 pt-0 text-sm text-muted">
+                No visits have been written up {phrase}.
+              </p>
             )}
 
             <ul className="divide-y divide-border">
@@ -142,20 +171,18 @@ export function OverviewScreen() {
         </div>
 
         <Panel title="Needs attention" href="/manager/check-ins">
-          {(flagged.isPending || missed.isPending) && (
+          {(checkIns.isPending || missed.isPending) && (
             <FieldPulseLoader className="p-5 pt-0" />
           )}
 
-          {(flagged.isError || missed.isError) && (
+          {(checkIns.isError || missed.isError) && (
             <p role="alert" className="p-5 pt-0 text-sm text-danger">
               Could not check for flagged or missed visits.
             </p>
           )}
 
-          {flagged.data && missed.data && attention.length === 0 && (
-            <p className="p-5 pt-0 text-sm text-muted">
-              Nothing flagged or missed in the past week.
-            </p>
+          {checkIns.data && missed.data && attention.length === 0 && (
+            <p className="p-5 pt-0 text-sm text-muted">Nothing flagged or missed {phrase}.</p>
           )}
 
           <ul className="divide-y divide-border">
@@ -166,7 +193,7 @@ export function OverviewScreen() {
 
           {attention.length > 6 && (
             <p className="px-5 pb-4 text-sm text-muted">
-              and {attention.length - 6} more in the past week
+              and {attention.length - 6} more {phrase}
             </p>
           )}
         </Panel>
@@ -204,6 +231,43 @@ function Panel({
 
       {children}
     </section>
+  );
+}
+
+function WorkedPairRow({
+  work,
+  onOpenVisit,
+}: {
+  work: WorkedPair;
+  onOpenVisit: (visitId: string) => void;
+}) {
+  const { pair, visits, last } = work;
+
+  return (
+    <li className="flex items-start justify-between gap-3 px-5 py-4">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <MemberAvatars users={openMembers(pair).map((member) => member.user)} />
+          <p className="min-w-0 truncate font-medium">{pairLabel({ pairId: pair.id, pair })}</p>
+        </div>
+
+        <p className="mt-1 truncate text-sm">
+          <span className="text-muted">Last at </span>
+          <button
+            type="button"
+            onClick={() => onOpenVisit(last.visitId)}
+            className="hover:underline"
+          >
+            {last.companyName}
+          </button>
+          <span className="text-muted"> · {day(last.at)}</span>
+        </p>
+      </div>
+
+      <span className="shrink-0 rounded-md bg-chip-active-bg px-2.5 py-1 text-xs/none font-medium text-chip-active-edge">
+        {visits} {visits === 1 ? "visit" : "visits"}
+      </span>
+    </li>
   );
 }
 

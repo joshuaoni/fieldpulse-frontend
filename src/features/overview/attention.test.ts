@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CheckIn } from "@/features/check-ins/types";
 import type { Visit } from "@/features/visits/types";
-import { dayTotals, hasStarted, needsAttention } from "./attention";
+import { hasStarted, needsAttention, workedPairs } from "./attention";
 import type { SalesPair } from "@/features/pairs/types";
 
 const flaggedCheckIn = (overrides: Partial<CheckIn> = {}): CheckIn =>
@@ -114,8 +114,30 @@ describe("who is out", () => {
   });
 });
 
-describe("the day's visits", () => {
-  it("adds up across the roster", () => {
-    expect(dayTotals([pair(3, 6), pair(4, 6), pair(0, 5)])).toEqual({ done: 7, total: 17 });
+describe("workedPairs", () => {
+  const pair = (id: string) => ({ id, isActive: true }) as SalesPair;
+  const checkIn = (pairId: string, visitId: string, at: string, companyName = visitId) =>
+    ({ pairId, visitId, checkInAt: at, lead: { companyName } }) as CheckIn;
+
+  it("counts each visit once, even when both members checked in", () => {
+    const [worked] = workedPairs(
+      [pair("a")],
+      [checkIn("a", "v1", "2026-10-20T09:00:00Z"), checkIn("a", "v1", "2026-10-20T09:02:00Z")],
+    );
+
+    expect(worked.visits).toBe(1);
+  });
+
+  it("names the latest stop and leaves out pairs that never checked in", () => {
+    const worked = workedPairs(
+      [pair("a"), pair("b")],
+      [
+        checkIn("a", "v2", "2026-10-21T11:00:00Z", "Later Ltd"),
+        checkIn("a", "v1", "2026-10-20T09:00:00Z", "Earlier Ltd"),
+      ],
+    );
+
+    expect(worked.map((work) => work.pair.id)).toEqual(["a"]);
+    expect(worked[0].last.companyName).toBe("Later Ltd");
   });
 });

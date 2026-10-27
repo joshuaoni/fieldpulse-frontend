@@ -15,26 +15,8 @@ import {
   type CheckInStatus,
 } from "../types";
 import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
-
-function thisWeek(): { from: string; to: string } {
-  const monday = new Date();
-  monday.setUTCHours(0, 0, 0, 0);
-  monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7));
-
-  const sunday = new Date(monday);
-  sunday.setUTCDate(sunday.getUTCDate() + 6);
-  sunday.setUTCHours(23, 59, 59, 999);
-
-  return { from: monday.toISOString(), to: sunday.toISOString() };
-}
-
-const rangeLabel = ({ from, to }: { from: string; to: string }) => {
-  const start = new Date(from);
-  const end = new Date(to);
-  const month = { month: "short" as const, day: "numeric" as const };
-
-  return `${start.toLocaleDateString([], month)} – ${end.toLocaleDateString([], { ...month, year: "numeric" })}`;
-};
+import { DateRangeFilter } from "@/components/ui/date-range-filter";
+import { inclusiveWindowOf, rangeLabel, rangePhrase, type DateRange } from "@/lib/date-range";
 
 const time = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -60,12 +42,15 @@ function arrival(iso: string): string {
 }
 
 export function CheckInsScreen() {
-  const [range] = useState(thisWeek);
+  const [range, setRange] = useState<DateRange>({ preset: "WEEK" });
   const [status, setStatus] = useState<CheckInStatus | undefined>(undefined);
   const [openId, setOpenId] = useState<string | null>(null);
 
-  const { data, isPending, isError, error } = useCheckIns({ ...range, status });
-  const paged = usePagedItems(data?.checkIns ?? [], status ?? "ALL");
+  const { data, isPending, isError, error } = useCheckIns({
+    ...inclusiveWindowOf(range),
+    status,
+  });
+  const paged = usePagedItems(data?.checkIns ?? [], `${status ?? "ALL"}:${JSON.stringify(range)}`);
   const counts = data?.counts;
   const open = data?.checkIns.find((checkIn) => checkIn.attendanceId === openId) ?? null;
 
@@ -77,6 +62,10 @@ export function CheckInsScreen() {
         <h1 className="text-2xl font-semibold tracking-tight">Check-ins</h1>
         <p className="mt-1 text-sm text-muted">{rangeLabel(range)}</p>
       </header>
+
+      <div className="mt-5">
+        <DateRangeFilter value={range} onChange={setRange} />
+      </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
         <Tab
@@ -116,8 +105,8 @@ export function CheckInsScreen() {
       {data && data.checkIns.length === 0 && (
         <p className="mt-6 rounded-xl border border-dashed border-border-strong p-6 text-sm text-muted">
           {status
-            ? `Nothing ${STATUS_LABEL[status].toLowerCase()} this week.`
-            : "No check-ins recorded this week yet."}
+            ? `Nothing ${STATUS_LABEL[status].toLowerCase()} ${rangePhrase(range)}.`
+            : `No check-ins recorded ${rangePhrase(range)}.`}
         </p>
       )}
 

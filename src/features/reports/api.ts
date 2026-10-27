@@ -1,6 +1,7 @@
 import { api, apiBlob } from "@/lib/api-client";
 import { PAGE_SIZE } from "@/components/ui/pager";
-import { windowOf, type ReportFilters, type ReportPage, type TeamOverview } from "./types";
+import { windowOf } from "@/lib/date-range";
+import type { ReportFilters, ReportPage, TeamOverview } from "./types";
 
 function params(filters: ReportFilters): URLSearchParams {
   const { from, to } = windowOf(filters.range);

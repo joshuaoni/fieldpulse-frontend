@@ -87,6 +87,7 @@ export interface VisitFilters {
   pairId?: string;
   repId?: string;
   openCheckIn?: boolean;
+  issued?: boolean;
   page?: number;
   pageSize?: number;
 }
