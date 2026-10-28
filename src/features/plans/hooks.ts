@@ -78,7 +78,7 @@ export function useGeneratePlans(weekStart?: string) {
 
   return useMutation({
     mutationFn: () => plansApi.generatePlans(weekStart),
-    onSuccess: () => {
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: planKeys.week(weekStart) });
     },
   });

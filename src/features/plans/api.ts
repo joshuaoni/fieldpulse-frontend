@@ -8,19 +8,19 @@ import type { CandidateLead, GenerateResult, Office, Plan } from "./types";
 const GENERATE_TIMEOUT_MS = 60_000;
 
 export interface PlanWeek {
-  /**
-   * Where every route starts and ends. Absent on an older backend, which is
-   * why the route view treats it as optional rather than assuming (0, 0) —
-   * a route drawn from the Gulf of Guinea would be worse than no route.
-   */
   office?: Office;
+  /**
+   * Active pairs a generate run would write for. Zero means every plan that
+   * week is published, so generating would pay for routing and save nothing.
+   */
+  pairsToPlan?: number;
   plans: Plan[];
 }
 
 export async function fetchPlans(weekStart?: string): Promise<PlanWeek> {
   const query = weekStart ? `?weekStart=${encodeURIComponent(weekStart)}` : "";
-  const { office, plans } = await api<{ office?: Office; plans: Plan[] }>(`/api/plans${query}`);
-  return { office, plans };
+  const { office, pairsToPlan, plans } = await api<PlanWeek>(`/api/plans${query}`);
+  return { office, pairsToPlan, plans };
 }
 
 export async function generatePlans(weekStart?: string): Promise<GenerateResult> {
