@@ -64,8 +64,8 @@ const plan = (id: string, status: Plan["status"], stops: PlannedStop[]): Plan =>
   visits: stops,
 });
 
-function show(plans: Plan[]) {
-  fetchPlans.mockResolvedValue({ plans });
+function show(plans: Plan[], pairsToPlan?: number) {
+  fetchPlans.mockResolvedValue({ plans, pairsToPlan });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
   render(
@@ -145,5 +145,27 @@ describe("the button that plans the week", () => {
 
     expect(screen.getByRole("button", { name: "Regenerate" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Generate" })).toBeNull();
+  });
+});
+
+/**
+ * A run over a fully published week routes every pair's days — a paid maps
+ * request each — then saves none of them, so the button is not offered.
+ */
+describe("regenerating a published week", () => {
+  const regenerate = () => screen.getByRole("button", { name: /Regenerate/ });
+
+  it("is off when every pair's plan is published", async () => {
+    show([plan("1", "PUBLISHED", [stop("s1", "Capital Starters")])], 0);
+    await screen.findByText("Pair 1");
+
+    expect(regenerate().hasAttribute("disabled")).toBe(true);
+  });
+
+  it("stays on while some pair still has a plan to write", async () => {
+    show([plan("1", "PUBLISHED", [stop("s1", "Capital Starters")])], 1);
+    await screen.findByText("Pair 1");
+
+    expect(regenerate().hasAttribute("disabled")).toBe(false);
   });
 });

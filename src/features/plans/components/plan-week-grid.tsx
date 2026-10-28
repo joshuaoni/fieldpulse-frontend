@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Plus, RotateCw, Trash2 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { ApiError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MemberAvatars } from "@/components/ui/member-avatars";
@@ -87,8 +88,13 @@ export function PlanWeekGrid() {
   const draftStops = drafts.reduce((sum, plan) => sum + plan.visits.length, 0);
   const anyPublished = activePlans.some((plan) => plan.status === "PUBLISHED");
   const totalLeads = activePlans.reduce((sum, plan) => sum + plan.visits.length, 0);
+  const allPublished = week?.pairsToPlan === 0;
+  const generateError =
+    generate.error instanceof ApiError && generate.error.code === "WEEK_ALREADY_PUBLISHED"
+      ? null
+      : generate.error;
   const failure =
-    generate.error ?? adjust.error ?? remove.error ?? publish.error ?? (isError ? error : null);
+    generateError ?? adjust.error ?? remove.error ?? publish.error ?? (isError ? error : null);
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4">
@@ -112,7 +118,12 @@ export function PlanWeekGrid() {
           <Button
             variant="outline"
             onClick={() => generate.mutate()}
-            disabled={generate.isPending || busy}
+            disabled={generate.isPending || busy || allPublished}
+            title={
+              allPublished
+                ? "Every pair's plan for this week is published — change days directly instead"
+                : undefined
+            }
           >
             <RotateCw size={18} aria-hidden />
             {generate.isPending ? "Planning…" : activePlans.length ? "Regenerate" : "Generate"}
