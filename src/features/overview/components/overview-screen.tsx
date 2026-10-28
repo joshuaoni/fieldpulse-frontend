@@ -16,6 +16,7 @@ import { useCheckIns } from "@/features/check-ins/hooks";
 import { useTeamVisits } from "@/features/visits/hooks";
 import { VisitDetailModal } from "@/features/visits/components/visit-detail-modal";
 import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
+import { ScrollHint } from "@/components/ui/scroll-hint";
 import { DateRangeFilter } from "@/components/ui/date-range-filter";
 import {
   TODAY,
@@ -51,7 +52,7 @@ export function OverviewScreen() {
   const metrics = useTeamOverview(range);
   const reports = useReports({ ...NO_FILTERS, range }, 1);
   const checkIns = useCheckIns(period);
-  const missed = useTeamVisits({ ...period, status: "MISSED", pageSize: 50 });
+  const missed = useTeamVisits({ ...period, status: "MISSED", pageSize: 100 });
   const scheduled = useTeamVisits({ ...period, issued: true, pageSize: 1 });
   const completed = useTeamVisits({ ...period, issued: true, status: "COMPLETED", pageSize: 1 });
 
@@ -170,7 +171,16 @@ export function OverviewScreen() {
           </Panel>
         </div>
 
-        <Panel title="Needs attention" href="/manager/check-ins">
+        <Panel
+          title="Needs attention"
+          aside={
+            attention.length > 0 && (
+              <span className="rounded-full bg-sunken px-2.5 py-1 text-xs font-medium text-muted tabular-nums">
+                {attention.length}
+              </span>
+            )
+          }
+        >
           {(checkIns.isPending || missed.isPending) && (
             <FieldPulseLoader className="p-5 pt-0" />
           )}
@@ -185,15 +195,20 @@ export function OverviewScreen() {
             <p className="p-5 pt-0 text-sm text-muted">Nothing flagged or missed {phrase}.</p>
           )}
 
-          <ul className="divide-y divide-border">
-            {attention.slice(0, 6).map((item) => (
-              <Attention key={item.id} item={item} onOpenVisit={setOpenVisitId} />
-            ))}
-          </ul>
+          {attention.length > 0 && (
+            <ScrollHint label="Visits needing attention">
+              <ul className="divide-y divide-border border-t border-border">
+                {attention.map((item) => (
+                  <Attention key={item.id} item={item} onOpenVisit={setOpenVisitId} />
+                ))}
+              </ul>
+            </ScrollHint>
+          )}
 
-          {attention.length > 6 && (
-            <p className="px-5 pb-4 text-sm text-muted">
-              and {attention.length - 6} more {phrase}
+          {missed.data && missed.data.pagination.totalItems > missed.data.visits.length && (
+            <p className="px-5 py-3 text-sm text-muted">
+              Showing {missed.data.visits.length} of {missed.data.pagination.totalItems} missed
+              visits.
             </p>
           )}
         </Panel>
@@ -209,16 +224,19 @@ export function OverviewScreen() {
 function Panel({
   title,
   href,
+  aside,
   children,
 }: {
   title: string;
   href?: string;
+  aside?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-border bg-surface">
+    <section className="overflow-hidden rounded-xl border border-border bg-surface">
       <div className="flex items-center justify-between gap-3 p-5">
         <h2 className="text-base font-semibold">{title}</h2>
+        {aside}
         {href && (
           <Link
             href={href}
