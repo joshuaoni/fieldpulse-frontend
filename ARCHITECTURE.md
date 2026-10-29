@@ -65,7 +65,7 @@ Planned feature slices: `visits`, `leads`, `plans`, `reminders`.
 `leads`, that shared thing belongs in `lib/` or `components/`.
 
 **Composition slices are the one exception.** A slice whose whole job is to
-assemble a view of the others — `overview`, `notifications` — reads from the
+assemble a view of the others — `overview`, `notifications`, `manager-reports` — reads from the
 domain slices and is read by none of them, so it cannot be the start of a
 cycle. 
 

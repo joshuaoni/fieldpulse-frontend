@@ -21,13 +21,16 @@ import {
   type TeamMetric,
 } from "../types";
 import { ReportFiltersDialog } from "./report-filters";
-import { VisitDetailModal } from "@/features/visits/components/visit-detail-modal";
 import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
 
-export function ReportsScreen() {
+export function ReportsScreen({
+  renderVisit,
+}: {
+  renderVisit?: (visitId: string, onClose: () => void) => React.ReactNode;
+} = {}) {
   const [filters, setFilters] = useState<ReportFilters>(NO_FILTERS);
   const [search, setSearch] = useState("");
   const [filtering, setFiltering] = useState(false);
@@ -190,7 +193,11 @@ export function ReportsScreen() {
         {reports.data && reports.data.reports.length > 0 && (
           <ul className="mt-2 divide-y divide-border">
             {reports.data.reports.map((report) => (
-              <ReportRow key={report.id} report={report} onOpenVisit={setOpenVisitId} />
+              <ReportRow
+                key={report.id}
+                report={report}
+                onOpenVisit={renderVisit ? setOpenVisitId : undefined}
+              />
             ))}
           </ul>
         )}
@@ -216,9 +223,7 @@ export function ReportsScreen() {
         />
       )}
 
-      {openVisitId && (
-        <VisitDetailModal visitId={openVisitId} onClose={() => setOpenVisitId(null)} />
-      )}
+      {openVisitId && renderVisit?.(openVisitId, () => setOpenVisitId(null))}
     </div>
   );
 }
@@ -274,18 +279,22 @@ function ReportRow({
   onOpenVisit,
 }: {
   report: FieldReport;
-  onOpenVisit: (visitId: string) => void;
+  onOpenVisit?: (visitId: string) => void;
 }) {
   return (
     <li className="py-4">
       <div className="flex items-start justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => onOpenVisit(report.visitId)}
-          className="block min-w-0 truncate text-left font-semibold hover:underline"
-        >
-          {report.lead.companyName}
-        </button>
+        {onOpenVisit ? (
+          <button
+            type="button"
+            onClick={() => onOpenVisit(report.visitId)}
+            className="block min-w-0 truncate text-left font-semibold hover:underline"
+          >
+            {report.lead.companyName}
+          </button>
+        ) : (
+          <p className="min-w-0 truncate font-semibold">{report.lead.companyName}</p>
+        )}
 
         {report.outcome && (
           <span
