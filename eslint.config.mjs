@@ -24,7 +24,7 @@ const SLICES = [
  * what the domain slices already know. They read from the list above and are
  * read by nobody.
  */
-const COMPOSITION = ["notifications", "overview"];
+const COMPOSITION = ["manager-reports", "notifications", "overview"];
 
 const ownSliceOnly = (slice) => ({
   files: [`src/features/${slice}/**`],
