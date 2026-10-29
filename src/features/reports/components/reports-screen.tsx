@@ -21,6 +21,7 @@ import {
   type TeamMetric,
 } from "../types";
 import { ReportFiltersDialog } from "./report-filters";
+import { VisitDetailModal } from "@/features/visits/components/visit-detail-modal";
 import { FieldPulseLoader } from "@/components/ui/fieldpulse-loader";
 
 const day = (iso: string) =>
@@ -30,6 +31,7 @@ export function ReportsScreen() {
   const [filters, setFilters] = useState<ReportFilters>(NO_FILTERS);
   const [search, setSearch] = useState("");
   const [filtering, setFiltering] = useState(false);
+  const [openVisitId, setOpenVisitId] = useState<string | null>(null);
 
   const applied: ReportFilters = { ...filters, search: search.trim() || undefined };
 
@@ -188,7 +190,7 @@ export function ReportsScreen() {
         {reports.data && reports.data.reports.length > 0 && (
           <ul className="mt-2 divide-y divide-border">
             {reports.data.reports.map((report) => (
-              <ReportRow key={report.id} report={report} />
+              <ReportRow key={report.id} report={report} onOpenVisit={setOpenVisitId} />
             ))}
           </ul>
         )}
@@ -212,6 +214,10 @@ export function ReportsScreen() {
           }}
           onClose={() => setFiltering(false)}
         />
+      )}
+
+      {openVisitId && (
+        <VisitDetailModal visitId={openVisitId} onClose={() => setOpenVisitId(null)} />
       )}
     </div>
   );
@@ -263,11 +269,23 @@ function AppliedChip({ label, onRemove }: { label: string; onRemove: () => void 
   );
 }
 
-function ReportRow({ report }: { report: FieldReport }) {
+function ReportRow({
+  report,
+  onOpenVisit,
+}: {
+  report: FieldReport;
+  onOpenVisit: (visitId: string) => void;
+}) {
   return (
     <li className="py-4">
       <div className="flex items-start justify-between gap-3">
-        <p className="min-w-0 truncate font-semibold">{report.lead.companyName}</p>
+        <button
+          type="button"
+          onClick={() => onOpenVisit(report.visitId)}
+          className="block min-w-0 truncate text-left font-semibold hover:underline"
+        >
+          {report.lead.companyName}
+        </button>
 
         {report.outcome && (
           <span
